@@ -4,6 +4,7 @@ import numpy as np
 from scipy.optimize import brentq
 from matplotlib import pyplot as plt
 import pandas as pd
+from math import exp
 
 def getRandIntervals(N, phi, size, rng=None):
     #Set seed for reproducibility
@@ -15,13 +16,25 @@ def getRandIntervals(N, phi, size, rng=None):
 
     intervals = []
     for i in range(1, size + 1):
-        lambda_i = generateFailureRate(N, phi, i)
+        lambda_i = calcFailureRate(N, phi, i)
         t_i = rng.exponential(1 / lambda_i)
         intervals.append(t_i)
     return np.array(intervals)
 
-def generateFailureRate(N, phi, intervalNum):
+def calcFailureRate(N, phi, intervalNum):
     return phi * (N - (intervalNum - 1))
+
+def calcFailureDensity(N, phi, intervalNum, t):
+    return calcFailureRate(N, phi, intervalNum) * exp( -phi * ( N - (intervalNum - 1) ) * t )
+
+def calcFailureDistribution(N, phi, intervalNum, t):
+    return 1 - calcReliability(N, phi, intervalNum, t)
+
+def calcReliability(N, phi, intervalNum, t):
+    return exp( -phi * ( N - (intervalNum - 1) ) * t )
+
+def calcMeanTimeToFailure(N, phi, intervalNum):
+    return 1 / calcFailureRate(N, phi, intervalNum)
 
 def estimateParameters(intervals):
     n = len(intervals)
@@ -66,35 +79,113 @@ phiReal = 0.1 #Failure rate contributed by each fault
 #Estimate parameters
 NEst, phiEst = estimateParameters(intervals)
 
-estiamtedFailureRates = np.array([generateFailureRate(NEst, phiEst, i) for i in range(1, len(intervals) + 1)])
-actualFailureRates = np.array([generateFailureRate(NReal, phiReal, i) for i in range(1, len(intervals) + 1)])
+estimatedFailureRates = np.array([calcFailureRate(NEst, phiEst, i) for i in range(1, len(intervals) + 1)])
+actualFailureRates = np.array([calcFailureRate(NReal, phiReal, i) for i in range(1, len(intervals) + 1)])
+
+estimatedFailureDensities = np.array([calcFailureDensity(NEst, phiEst, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
+actualFailureDensities = np.array([calcFailureDensity(NReal, phiReal, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
+
+estimatedFailureDistributions = np.array([calcFailureDistribution(NEst, phiEst, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
+actualFailureDistributions = np.array([calcFailureDistribution(NReal, phiReal, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
+
+estimatedReliabilities = np.array([calcReliability(NEst, phiEst, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
+actualReliabilities = np.array([calcReliability(NReal, phiReal, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
+
+estimatedMeanTimesToFailure = np.array([calcMeanTimeToFailure(NEst, phiEst, i) for i in range(1, len(intervals) + 1)])
+actualMeanTimesToFailure = np.array([calcMeanTimeToFailure(NReal, phiReal, i) for i in range(1, len(intervals) + 1)])
 
 #Plot the failure rates
-plt.plot(estiamtedFailureRates, label='Estimated Failure Rate')
+plt.plot(estimatedFailureRates, label='Estimated Failure Rate')
 plt.plot(actualFailureRates, label='Actual Failure Rate')
 plt.xlabel('Failure Number')
 plt.ylabel('Failure Rate')
 plt.grid()
 plt.legend()
 plt.title("Estimated vs Actual Failure Rates")
-
 plt.savefig('jelinskiMoranda/failure_rates.png')
 
+#Plot the failure densities
+plt.figure()
+plt.plot(estimatedFailureDensities, label='Estimated Failure Density')
+plt.plot(actualFailureDensities, label='Actual Failure Density')
+plt.xlabel('Failure Number')
+plt.ylabel('Failure Density')
+plt.grid()
+plt.legend()
+plt.title("Estimated vs Actual Failure Densities")
+plt.savefig('jelinskiMoranda/failure_densities.png')
+
+#Plot the failure distributions
+plt.figure()
+plt.plot(estimatedFailureDistributions, label='Estimated Failure Distribution')
+plt.plot(actualFailureDistributions, label='Actual Failure Distribution')
+plt.xlabel('Failure Number')
+plt.ylabel('Failure Distribution')
+plt.grid()
+plt.legend()
+plt.title("Estimated vs Actual Failure Distributions")
+plt.savefig('jelinskiMoranda/failure_distributions.png')
+
+#Plot the reliabilities
+plt.figure()
+plt.plot(estimatedReliabilities, label='Estimated Reliability')
+plt.plot(actualReliabilities, label='Actual Reliability')
+plt.xlabel('Failure Number')
+plt.ylabel('Reliability')
+plt.grid()
+plt.legend()
+plt.title("Estimated vs Actual Reliabilities")
+plt.savefig('jelinskiMoranda/reliabilities.png')
+
+#Plot the mean times to failure
+plt.figure()
+plt.plot(estimatedMeanTimesToFailure, label='Estimated Mean Time to Failure')
+plt.plot(actualMeanTimesToFailure, label='Actual Mean Time to Failure')
+plt.xlabel('Failure Number')
+plt.ylabel('Mean Time to Failure')
+plt.grid()
+plt.legend()
+plt.title("Estimated vs Actual Mean Times to Failure")
+plt.savefig('jelinskiMoranda/mean_times_to_failure.png')
 
 #Round data for better readability
 intervals = np.round(intervals, 4)
-estiamtedFailureRates = np.round(estiamtedFailureRates, 4)
+estimatedFailureRates = np.round(estimatedFailureRates, 4)
 actualFailureRates = np.round(actualFailureRates, 4)
-percentDifference = np.abs(np.round(100 * (estiamtedFailureRates - actualFailureRates) / actualFailureRates, 2))
+failureRatePercentDifference = np.abs(np.round(100 * (estimatedFailureRates - actualFailureRates) / actualFailureRates, 2))
+estimatedFailureDensities = np.round(estimatedFailureDensities, 4)
+actualFailureDensities = np.round(actualFailureDensities, 4)
+failureDensityPercentDifference = np.abs(np.round(100 * (estimatedFailureDensities - actualFailureDensities) / actualFailureDensities, 2))
+estimatedFailureDistributions = np.round(estimatedFailureDistributions, 4)
+actualFailureDistributions = np.round(actualFailureDistributions, 4)
+failureDistributionPercentDifference = np.abs(np.round(100 * (estimatedFailureDistributions - actualFailureDistributions) / actualFailureDistributions, 2))
+estimatedReliabilities = np.round(estimatedReliabilities, 4)
+actualReliabilities = np.round(actualReliabilities, 4)
+reliabilityPercentDifference = np.abs(np.round(100 * (estimatedReliabilities - actualReliabilities) / actualReliabilities, 2))
+estimatedMeanTimesToFailure = np.round(estimatedMeanTimesToFailure, 4)
+actualMeanTimesToFailure = np.round(actualMeanTimesToFailure, 4)
+meanTimeToFailurePercentDifference = np.abs(np.round(100 * (estimatedMeanTimesToFailure - actualMeanTimesToFailure) / actualMeanTimesToFailure, 2))
 
 #Create a DataFrame and write to a CSV file
 pd.DataFrame({
     'Failure Number': np.arange(1, len(intervals) + 1),
     'Time Interval': intervals,
-    'Estimated Failure Rate': estiamtedFailureRates,
+    'Estimated Failure Rate': estimatedFailureRates,
     'Actual Failure Rate': actualFailureRates,
-    'Percent Difference': percentDifference
-}).to_csv('jelinskiMoranda/failure_rates.csv', index=False)
+    'Failure Rate Percent Difference': failureRatePercentDifference,
+    'Estimated Failure Density': estimatedFailureDensities,
+    'Actual Failure Density': actualFailureDensities,
+    'Failure Density Percent Difference': failureDensityPercentDifference,
+    'Estimated Failure Distribution': estimatedFailureDistributions,
+    'Actual Failure Distribution': actualFailureDistributions,
+    'Failure Distribution Percent Difference': failureDistributionPercentDifference,
+    'Estimated Reliability': estimatedReliabilities,
+    'Actual Reliability': actualReliabilities,
+    'Reliability Percent Difference': reliabilityPercentDifference,
+    'Estimated Mean Time to Failure': estimatedMeanTimesToFailure,
+    'Actual Mean Time to Failure': actualMeanTimesToFailure,
+    'Mean Time to Failure Percent Difference': meanTimeToFailurePercentDifference
+}).to_csv('jelinskiMoranda/data.csv', index=False)
 
 #Save nontable data to a text file
 with open('jelinskiMoranda/results.txt', 'w') as f:
