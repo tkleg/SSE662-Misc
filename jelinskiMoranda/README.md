@@ -32,6 +32,5 @@ I attempted to source data from the paper I got the equations from, but the resu
     - The random seed used.
     - Estimated, actual, and percent differences between estimated and actual for the parameters *N* and *$\phi$*.
     - Average percent difference between every estimated and actual array.
-## Source of equations
-The equations were pulled from a paper found [HERE](https://research.ijcaonline.org/volume48/number18/pxc3880534.pdf)
-
+## References
+S.Mahapatra, G., & Roy, P. (2012). Modified Jelinski-Moranda Software Reliability Model with Imperfect Debugging Phenomenon. International Journal of Computer Applications, 48(18), 38–46. https://doi.org/10.5120/7451-0534
