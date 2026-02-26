@@ -1,8 +1,3 @@
-Estimated N: 249.21, Estimated phi: 0.0989
-Actual N: 250, Actual phi: 0.1000
 Random seed used: 1749434685
-Average Percent Difference in Failure Rates: -2.71%
-Average Percent Difference in Failure Densities: 0.50%
-Average Percent Difference in Failure Distributions: -1.90%
-Average Percent Difference in Reliabilities: 2.21%
-Average Percent Difference in Mean Times to Failure: 2.98%
+Estimated N: 249.21, Actual N: 250.0000, Percent Difference: -0.32%
+Estimated phi: 0.0989, Actual phi: 0.1000, Percent Difference: -1.11%

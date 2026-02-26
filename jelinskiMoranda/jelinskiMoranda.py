@@ -49,10 +49,12 @@ def estimateParameters(intervals):
         return eq6Left(NEst) - eq6Right(NEst)
     
     #Ensure different signs for root finding call
+    print("Finding root for N...")
     left = n + 1e-5
-    right = n + 1e-4
+    right = left + 0.1
     while eq6(left) * eq6(right) > 0:
-        right += 1e-2
+        right += 0.1
+    print(f"Root found between {left:.5f} and {right:.5f}")
 
     #Find the root
     NEst = brentq(eq6, left, right)
@@ -74,138 +76,99 @@ phiReal = 0.1 #Failure rate contributed by each fault
 
 #Create random time intervals
 intervals = getRandIntervals(NReal, phiReal, NReal-1, rng)
-print("Done making intervals", intervals)
+print("Done making intervals")
 
 
 #Estimate parameters
 NEst, phiEst = estimateParameters(intervals)
 print("Done estimating parameters")
 
-estimatedFailureRates = np.array([calcFailureRate(NEst, phiEst, i) for i in range(1, len(intervals) + 1)])
-actualFailureRates = np.array([calcFailureRate(NReal, phiReal, i) for i in range(1, len(intervals) + 1)])
-print("Done calculating failure rates")
+graphs = {
+    'failureRate': {
+        "xlabel": 'Failure Number',
+        "ylabel": 'Failure Rate',
+        "title": "Estimated vs Actual Failure Rates",
+        "estimated": np.array([calcFailureRate(NEst, phiEst, i) for i in range(1, len(intervals) + 1)]),
+        "actual": np.array([calcFailureRate(NReal, phiReal, i) for i in range(1, len(intervals) + 1)]),
+    },
+    'failureDensity': {
+        "xlabel": 'Failure Number',
+        "ylabel": 'Failure Density',
+        "title": "Estimated vs Actual Failure Densities",
+        "estimated": np.array([calcFailureDensity(NEst, phiEst, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)]),
+        "actual": np.array([calcFailureDensity(NReal, phiReal, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
+    },
+    'failureDistribution': {
+        "xlabel": 'Failure Number',
+        "ylabel": 'Failure Distribution',
+        "title": "Estimated vs Actual Failure Distributions",
+        "estimated": np.array([calcFailureDistribution(NEst, phiEst, i, 0.1) for i in range(1, len(intervals) + 1)]),
+        "actual": np.array([calcFailureDistribution(NReal, phiReal, i, 0.1) for i in range(1, len(intervals) + 1)])
+    },
+    'reliability': {
+        "xlabel": 'Failure Number',
+        "ylabel": 'Reliability',
+        "title": "Reliability at Constant Intervals",
+        "estimated": np.array([calcReliability(NEst, phiEst, i, 0.1) for i in range(1, len(intervals) + 1)]),
+        "actual": np.array([calcReliability(NReal, phiReal, i, 0.1) for i in range(1, len(intervals) + 1)])
+    },
+    'meanTimeToFailure': {
+        "xlabel": 'Failure Number',
+        "ylabel": 'Mean Time to Failure',
+        "title": "Estimated vs Actual Mean Times to Failure",
+        "estimated": np.array([calcMeanTimeToFailure(NEst, phiEst, i) for i in range(1, len(intervals) + 1)]),
+        "actual": np.array([calcMeanTimeToFailure(NReal, phiReal, i) for i in range(1, len(intervals) + 1)])
+    }
+}
+#Calculate percent difference for each graph
+for fileName, graph in graphs.items():
+    graphs[fileName]['percentDifference'] = ((graph['estimated'] - graph['actual']) / graph['actual']) * 100
 
-estimatedFailureDensities = np.array([calcFailureDensity(NEst, phiEst, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
-actualFailureDensities = np.array([calcFailureDensity(NReal, phiReal, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
-print("Done calculating failure densities")
+#Plot the data
+for fileName in graphs:
+    graph = graphs[fileName]
+    plt.figure()
+    plt.plot(graph['estimated'], label='Estimated')
+    plt.plot(graph['actual'], label='Actual')
+    plt.xlabel(graph['xlabel'])
+    plt.ylabel(graph['ylabel'])
+    plt.title(graph['title'])
+    plt.legend()
+    plt.grid()
+    plt.savefig(f'jelinskiMoranda/{fileName}.png')
 
-fixed_time = 0.1  # Fixed time point for smooth data
 
-estimatedFailureDistributions = np.array([calcFailureDistribution(NEst, phiEst, i, fixed_time) for i in range(1, len(intervals) + 1)])
-actualFailureDistributions = np.array([calcFailureDistribution(NReal, phiReal, i, fixed_time) for i in range(1, len(intervals) + 1)])
-print("Done calculating failure distributions")
-
-estimatedReliabilities = np.array([calcReliability(NEst, phiEst, i, fixed_time) for i in range(1, len(intervals) + 1)])
-actualReliabilities = np.array([calcReliability(NReal, phiReal, i, fixed_time) for i in range(1, len(intervals) + 1)])
-print("Done calculating reliabilities")
-
-estimatedMeanTimesToFailure = np.array([calcMeanTimeToFailure(NEst, phiEst, i) for i in range(1, len(intervals) + 1)])
-actualMeanTimesToFailure = np.array([calcMeanTimeToFailure(NReal, phiReal, i) for i in range(1, len(intervals) + 1)])
-print("Done calculating mean times to failure")
-
-#Plot the failure rates
-plt.plot(estimatedFailureRates, label='Estimated Failure Rate')
-plt.plot(actualFailureRates, label='Actual Failure Rate')
-plt.xlabel('Failure Number')
-plt.ylabel('Failure Rate')
-plt.grid()
-plt.legend()
-plt.title("Estimated vs Actual Failure Rates")
-plt.savefig('jelinskiMoranda/failure_rates.png')
-
-#Plot the failure densities
-plt.figure()
-plt.plot(estimatedFailureDensities, label='Estimated Failure Density')
-plt.plot(actualFailureDensities, label='Actual Failure Density')
-plt.xlabel('Failure Number')
-plt.ylabel('Failure Density')
-plt.grid()
-plt.legend()
-plt.title("Estimated vs Actual Failure Densities")
-plt.savefig('jelinskiMoranda/failure_densities.png')
-
-#Plot the failure distributions
-plt.figure()
-plt.plot(estimatedFailureDistributions, label='Estimated Failure Distribution')
-plt.plot(actualFailureDistributions, label='Actual Failure Distribution')
-plt.xlabel('Failure Number')
-plt.ylabel('Failure Distribution')
-plt.grid()
-plt.legend()
-plt.title("Estimated vs Actual Failure Distributions")
-plt.savefig('jelinskiMoranda/failure_distributions.png')
-
-#Plot the reliabilities - smooth vs erratic
-plt.figure()
-plt.plot(estimatedReliabilities, label='Estimated Reliability', linewidth=2.5, color='blue')
-plt.plot(actualReliabilities, label='Actual Reliability', linewidth=2.5, color='red')
-plt.xlabel('Failure Number')
-plt.ylabel('Reliability')
-plt.grid()
-plt.legend()
-plt.title("Reliability at Constant Intervals")
-plt.savefig('jelinskiMoranda/reliabilities.png')
-
-#Plot the mean times to failure
-plt.figure()
-plt.plot(estimatedMeanTimesToFailure, label='Estimated Mean Time to Failure')
-plt.plot(actualMeanTimesToFailure, label='Actual Mean Time to Failure')
-plt.xlabel('Failure Number')
-plt.ylabel('Mean Time to Failure')
-plt.grid()
-plt.legend()
-plt.title("Estimated vs Actual Mean Times to Failure")
-plt.savefig('jelinskiMoranda/mean_times_to_failure.png')
-
-#Round data for better readability
+#Round data for better readability in csv
 intervals = np.round(intervals, 4)
-estimatedFailureRates = np.round(estimatedFailureRates, 4)
-actualFailureRates = np.round(actualFailureRates, 4)
-failureRatePercentDifference = np.round(100 * (estimatedFailureRates - actualFailureRates) / actualFailureRates, 2)
-estimatedFailureDensities = np.round(estimatedFailureDensities, 4)
-actualFailureDensities = np.round(actualFailureDensities, 4)
-failureDensityPercentDifference = np.round(100 * (estimatedFailureDensities - actualFailureDensities) / actualFailureDensities, 2)
-estimatedFailureDistributions = np.round(estimatedFailureDistributions, 4)
-actualFailureDistributions = np.round(actualFailureDistributions, 4)
-failureDistributionPercentDifference = np.round(100 * (estimatedFailureDistributions - actualFailureDistributions) / actualFailureDistributions, 2)
-estimatedReliabilities = np.round(estimatedReliabilities, 4)
-actualReliabilities = np.round(actualReliabilities, 4)
-reliabilityPercentDifference = np.round(100 * (estimatedReliabilities - actualReliabilities) / actualReliabilities, 2)
-estimatedReliabilities = np.round(estimatedReliabilities, 4)
-actualReliabilities = np.round(actualReliabilities, 4)
-reliabilityPercentDifference = np.round(100 * (estimatedReliabilities - actualReliabilities) / actualReliabilities, 2)
-estimatedMeanTimesToFailure = np.round(estimatedMeanTimesToFailure, 4)
-actualMeanTimesToFailure = np.round(actualMeanTimesToFailure, 4)
-meanTimeToFailurePercentDifference = np.round(100 * (estimatedMeanTimesToFailure - actualMeanTimesToFailure) / actualMeanTimesToFailure, 2)
+for graph in graphs.values():
+    graph['estimated'] = np.round(graph['estimated'], 4)
+    graph['actual'] = np.round(graph['actual'], 4)
 
 #Create a DataFrame and write to a CSV file
-pd.DataFrame({
+df_dict = {
     'Failure Number': np.arange(1, len(intervals) + 1),
     'Time Interval': intervals,
-    'Estimated Failure Rate': estimatedFailureRates,
-    'Actual Failure Rate': actualFailureRates,
-    'Failure Rate Percent Difference': failureRatePercentDifference,
-    'Estimated Failure Density': estimatedFailureDensities,
-    'Actual Failure Density': actualFailureDensities,
-    'Failure Density Percent Difference': failureDensityPercentDifference,
-    'Estimated Failure Distribution': estimatedFailureDistributions,
-    'Actual Failure Distribution': actualFailureDistributions,
-    'Failure Distribution Percent Difference': failureDistributionPercentDifference,
-    'Estimated Reliability': estimatedReliabilities,
-    'Actual Reliability': actualReliabilities,
-    'Reliability Percent Difference': reliabilityPercentDifference,
-    'Estimated Mean Time to Failure': estimatedMeanTimesToFailure,
-    'Actual Mean Time to Failure': actualMeanTimesToFailure,
-    'Mean Time to Failure Percent Difference': meanTimeToFailurePercentDifference
-}).to_csv('jelinskiMoranda/data.csv', index=False)
+}
+df_dict.update({f"{graph['ylabel']} Estimated": graph['estimated'] for graph in graphs.values()})
+df_dict.update({f"{graph['ylabel']} Actual": graph['actual'] for graph in graphs.values()})
+df_dict.update({f"{graph['ylabel']} Percent Difference": graph['percentDifference'] for graph in graphs.values()})
+
+def sortColumns(colName):
+    colRoots = ['Failure Number', 'Time Interval', 'Failure Rate', 'Failure Density', 'Failure Distribution', 'Reliability', 'Mean Time to Failure']
+    colExtensions = ['Estimated', 'Actual', 'Percent Difference']
+    for root in colRoots:
+        if colName.startswith(root):
+            for ext in colExtensions:
+                if colName.endswith(ext):
+                    return (colRoots.index(root), colExtensions.index(ext))
+            return (colRoots.index(root), 0) #Put columns without extensions at the front
+
+df_dict = dict(sorted(df_dict.items(), key=lambda item: sortColumns(item[0])))
+
+pd.DataFrame(df_dict).to_csv('jelinskiMoranda/data.csv', index=False)
 
 #Save nontable data to a text file
 with open('jelinskiMoranda/results.txt', 'w') as f:
-    f.write(f"Estimated N: {NEst:.2f}, Estimated phi: {phiEst:.4f}\n")
-    f.write(f"Actual N: {NReal}, Actual phi: {phiReal:.4f}\n")
     f.write(f"Random seed used: {seed}\n")
-    f.write(f"Average Percent Difference in Failure Rates: {np.mean(failureRatePercentDifference):.2f}%\n")
-    f.write(f"Average Percent Difference in Failure Densities: {np.mean(failureDensityPercentDifference):.2f}%\n")
-    f.write(f"Average Percent Difference in Failure Distributions: {np.mean(failureDistributionPercentDifference):.2f}%\n")
-    f.write(f"Average Percent Difference in Reliabilities: {np.mean(reliabilityPercentDifference):.2f}%\n")
-    f.write(f"Average Percent Difference in Mean Times to Failure: {np.mean(meanTimeToFailurePercentDifference):.2f}%\n")
+    f.write(f"Estimated N: {NEst:.2f}, Actual N: {NReal:.4f}, Percent Difference: {((NEst - NReal) / NReal) * 100:.2f}%\n")
+    f.write(f"Estimated phi: {phiEst:.4f}, Actual phi: {phiReal:.4f}, Percent Difference: {((phiEst - phiReal) / phiReal) * 100:.2f}%\n")
