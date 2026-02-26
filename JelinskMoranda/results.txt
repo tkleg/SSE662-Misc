@@ -1,3 +1,0 @@
-Estimated N: 99.23, Estimated phi: 0.0976
-Actual N: 100, Actual phi: 0.1000
-Random seed used: 1771745833

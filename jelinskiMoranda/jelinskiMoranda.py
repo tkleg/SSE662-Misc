@@ -52,8 +52,8 @@ def estimateParameters(intervals):
 
 
 #Handle random seed
-seed = np.random.randint(0, 2**31)
-#seed = 1801421561
+#seed = np.random.randint(0, 2**31)
+seed = 1749434685
 rng = np.random.default_rng(seed)
 
 #Create random time intervals
@@ -78,7 +78,7 @@ plt.grid()
 plt.legend()
 plt.title("Estimated vs Actual Failure Rates")
 
-plt.savefig('failure_rates.png')
+plt.savefig('jelinskiMoranda/failure_rates.png')
 
 
 #Round data for better readability
@@ -94,10 +94,10 @@ pd.DataFrame({
     'Estimated Failure Rate': estiamtedFailureRates,
     'Actual Failure Rate': actualFailureRates,
     'Percent Difference': percentDifference
-}).to_csv('failure_rates.csv', index=False)
+}).to_csv('jelinskiMoranda/failure_rates.csv', index=False)
 
 #Save nontable data to a text file
-with open('results.txt', 'w') as f:
+with open('jelinskiMoranda/results.txt', 'w') as f:
     f.write(f"Estimated N: {NEst:.2f}, Estimated phi: {phiEst:.4f}\n")
     f.write(f"Actual N: {NReal}, Actual phi: {phiReal:.4f}\n")
     f.write(f"Random seed used: {seed}\n")
