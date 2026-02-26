@@ -69,30 +69,37 @@ def estimateParameters(intervals):
 seed = 1749434685
 rng = np.random.default_rng(seed)
 
-#Create random time intervals
-intervals = getRandIntervals(100, 0.1, 75, rng)
-
-
-NReal = 100 #Number of failures
+NReal = 250 #Number of failures - must match N used in getRandIntervals
 phiReal = 0.1 #Failure rate contributed by each fault
+
+#Create random time intervals
+intervals = getRandIntervals(NReal, phiReal, NReal-1, rng)
+print("Done making intervals", intervals)
+
 
 #Estimate parameters
 NEst, phiEst = estimateParameters(intervals)
+print("Done estimating parameters")
 
 estimatedFailureRates = np.array([calcFailureRate(NEst, phiEst, i) for i in range(1, len(intervals) + 1)])
 actualFailureRates = np.array([calcFailureRate(NReal, phiReal, i) for i in range(1, len(intervals) + 1)])
+print("Done calculating failure rates")
 
 estimatedFailureDensities = np.array([calcFailureDensity(NEst, phiEst, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
 actualFailureDensities = np.array([calcFailureDensity(NReal, phiReal, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
+print("Done calculating failure densities")
 
 estimatedFailureDistributions = np.array([calcFailureDistribution(NEst, phiEst, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
 actualFailureDistributions = np.array([calcFailureDistribution(NReal, phiReal, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
+print("Done calculating failure distributions")
 
 estimatedReliabilities = np.array([calcReliability(NEst, phiEst, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
 actualReliabilities = np.array([calcReliability(NReal, phiReal, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
+print("Done calculating reliabilities")
 
 estimatedMeanTimesToFailure = np.array([calcMeanTimeToFailure(NEst, phiEst, i) for i in range(1, len(intervals) + 1)])
 actualMeanTimesToFailure = np.array([calcMeanTimeToFailure(NReal, phiReal, i) for i in range(1, len(intervals) + 1)])
+print("Done calculating mean times to failure")
 
 #Plot the failure rates
 plt.plot(estimatedFailureRates, label='Estimated Failure Rate')
