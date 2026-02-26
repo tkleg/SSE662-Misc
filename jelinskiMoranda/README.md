@@ -24,7 +24,7 @@ I attempted to use data from the paper I got the equations from, but the results
 
 ### Program
 1. Generate time intervals using the hardcoded seed.
-2. Estimate the parameters *N* and *$\phi$*.
+2. Estimate the parameters *N* and *φ*.
 3. Calculate estimated and actual arrays for each failure.
    - One value per array for every failure.
 4. Generate percent differences for every entry of each estimated and actual array.
@@ -34,7 +34,7 @@ I attempted to use data from the paper I got the equations from, but the results
    - I chose to do this because as the values for estimated and absolute become very small, the percent difference explode, swaying the mean percent difference calculated in the next step.
 8. Write the following data to a text file.
     - The random seed used.
-    - Estimated, actual, and percent differences between estimated and actual for the parameters *N* and *$\phi$*.
+    - Estimated, actual, and percent differences between estimated and actual for the parameters *N* and *φ*.
     - Average percent difference between every estimated and actual array.
 ## References
 S.Mahapatra, G., & Roy, P. (2012). Modified Jelinski-Moranda Software Reliability Model with Imperfect Debugging Phenomenon. International Journal of Computer Applications, 48(18), 38–46. https://doi.org/10.5120/7451-0534
