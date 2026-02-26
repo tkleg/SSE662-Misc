@@ -21,30 +21,39 @@ def getRandIntervals(N, phi, size, rng=None):
         intervals.append(t_i)
     return np.array(intervals)
 
+#Reference: S.Mahapatra & Roy, 2012, pp. 39
 def calcFailureRate(N, phi, intervalNum):
     return phi * (N - (intervalNum - 1))
 
+#Reference: S.Mahapatra & Roy, 2012, pp. 39
 def calcFailureDensity(N, phi, intervalNum, t):
     return calcFailureRate(N, phi, intervalNum) * exp( -phi * ( N - (intervalNum - 1) ) * t )
 
+#Reference: S.Mahapatra & Roy, 2012, pp. 39
 def calcFailureDistribution(N, phi, intervalNum, t):
     return 1 - calcReliability(N, phi, intervalNum, t)
 
+#Reference: S.Mahapatra & Roy, 2012, pp. 39
 def calcReliability(N, phi, intervalNum, t):
     return exp( -phi * ( N - (intervalNum - 1) ) * t )
 
+#Reference: S.Mahapatra & Roy, 2012, pp. 39
 def calcMeanTimeToFailure(N, phi, intervalNum):
     return 1 / calcFailureRate(N, phi, intervalNum)
 
+#Reference: S.Mahapatra & Roy, 2012, pp. 39
+#Reference is for the basic equations, not the method of solving or root finding
 def estimateParameters(intervals):
     n = len(intervals)
-    #Solve for N^ using equation (6)
+    
     def eq6Left(NEst):
         return sum( 1 / (NEst - (i - 1)) for i in range(1, n + 1) )
+
     def eq6Right(NEst):
         sumIntervalsInv = 1 / np.sum(intervals)
         sumWeightedIntervals = sum( (i - 1) * intervals[i - 1] for i in range(1, n + 1) )
         return n / ( NEst - sumWeightedIntervals * sumIntervalsInv )
+    
     #Moves both sides to the left to solve with root finding, as the dependent variable is in a summutation, making analytical solving difficult
     def eq6(NEst):
         return eq6Left(NEst) - eq6Right(NEst)
@@ -69,7 +78,7 @@ def estimateParameters(intervals):
 
 #Handle random seed
 #seed = np.random.randint(0, 2**31)
-#seed hardcoded once I found one that produced good results, to ensure reproducibility
+#seed changed from random to hardcoded once I found one that produced good results, to ensure reproducibility
 seed = 1749434685
 rng = np.random.default_rng(seed)
 

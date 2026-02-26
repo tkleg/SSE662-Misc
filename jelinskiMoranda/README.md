@@ -4,7 +4,7 @@
 ## Purpose
 To show a basic Jelinsk-Moranda model running, with the accuracy of several estimated metrics measured, graphed, and analyzed.
 
-## Values Measured
+## Metrics Measured
 - Failure Rate
 - Failure Density
 - Failure Distribution
@@ -12,8 +12,12 @@ To show a basic Jelinsk-Moranda model running, with the accuracy of several esti
 - Mean time to Failure
   
 ## Methodology
+
+### Equation Generation
+The equations for the metrics were all sourced from the sole paper in the references at the bottom of this document.
+
 ### Data Generation
-I attempted to source data from the paper I got the equations from, but the results were poor. I opted for an exponential distribution instead since the time intervals should be exponentially distributed.
+I attempted to use data from the paper I got the equations from, but the results were poor. I opted for an exponential distribution instead since the time intervals should be exponentially distributed.
 #### Steps
 1. Randomly generate exponentially distributed data with a mean of the inverse of the failure rate.
 2. Once acceptable data is generated, hardcode the random generator seed to allow reproduction of values.
