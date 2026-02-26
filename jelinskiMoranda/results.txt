@@ -1,3 +1,8 @@
 Random seed used: 1749434685
 Estimated N: 249.21, Actual N: 250.0000, Percent Difference: -0.32%
 Estimated phi: 0.0989, Actual phi: 0.1000, Percent Difference: -1.11%
+Estimated vs Actual Failure Rates - Average Percent Difference: -1.84%
+Estimated vs Actual Failure Densities - Average Percent Difference: -0.19%
+Estimated vs Actual Failure Distributions - Average Percent Difference: -1.02%
+Estimated vs Actual Reliabilities - Average Percent Difference: 2.21%
+Estimated vs Actual Mean Times to Failure - Average Percent Difference: 1.88%

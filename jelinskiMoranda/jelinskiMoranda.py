@@ -45,6 +45,7 @@ def estimateParameters(intervals):
         sumIntervalsInv = 1 / np.sum(intervals)
         sumWeightedIntervals = sum( (i - 1) * intervals[i - 1] for i in range(1, n + 1) )
         return n / ( NEst - sumWeightedIntervals * sumIntervalsInv )
+    #Moves both sides to the left to solve with root finding, as the dependent variable is in a summutation, making analytical solving difficult
     def eq6(NEst):
         return eq6Left(NEst) - eq6Right(NEst)
     
@@ -68,6 +69,7 @@ def estimateParameters(intervals):
 
 #Handle random seed
 #seed = np.random.randint(0, 2**31)
+#seed hardcoded once I found one that produced good results, to ensure reproducibility
 seed = 1749434685
 rng = np.random.default_rng(seed)
 
@@ -77,7 +79,6 @@ phiReal = 0.1 #Failure rate contributed by each fault
 #Create random time intervals
 intervals = getRandIntervals(NReal, phiReal, NReal-1, rng)
 print("Done making intervals")
-
 
 #Estimate parameters
 NEst, phiEst = estimateParameters(intervals)
@@ -108,7 +109,7 @@ graphs = {
     'reliability': {
         "xlabel": 'Failure Number',
         "ylabel": 'Reliability',
-        "title": "Reliability at Constant Intervals",
+        "title": "Estimated vs Actual Reliabilities",
         "estimated": np.array([calcReliability(NEst, phiEst, i, 0.1) for i in range(1, len(intervals) + 1)]),
         "actual": np.array([calcReliability(NReal, phiReal, i, 0.1) for i in range(1, len(intervals) + 1)])
     },
@@ -125,16 +126,22 @@ for fileName, graph in graphs.items():
     graphs[fileName]['percentDifference'] = ((graph['estimated'] - graph['actual']) / graph['actual']) * 100
 
 #Plot the data
-for fileName in graphs:
-    graph = graphs[fileName]
-    plt.figure()
-    plt.plot(graph['estimated'], label='Estimated')
-    plt.plot(graph['actual'], label='Actual')
+for fileName, graph in graphs.items():
+    plt.figure(dpi=750)
+    plt.plot(graph['estimated'], label='Estimated', linewidth=0.75, alpha=0.8)
+    plt.plot(graph['actual'], label='Actual', linewidth=0.75, alpha=0.8)
     plt.xlabel(graph['xlabel'])
     plt.ylabel(graph['ylabel'])
     plt.title(graph['title'])
     plt.legend()
     plt.grid()
+    plt.subplots_adjust(bottom=0.15)  # Add space at bottom for caption
+    if fileName in ['reliability', 'failureDistribution']:
+        plt.figtext(0.5, 0.05, "Time interval is fixed to 0.1 seconds for better visualization", 
+                   ha='center', va='center', fontsize=9, style='italic')
+    else:
+        plt.figtext(0.5, 0.05, "Time interval is generated", 
+                   ha='center', va='center', fontsize=9, style='italic')
     plt.savefig(f'jelinskiMoranda/{fileName}.png')
 
 
@@ -167,8 +174,22 @@ df_dict = dict(sorted(df_dict.items(), key=lambda item: sortColumns(item[0])))
 
 pd.DataFrame(df_dict).to_csv('jelinskiMoranda/data.csv', index=False)
 
+
+#Remove Outliers from percent difference data for better graph scaling
+#Use IQR
+for fileName, graph in graphs.items():
+    percentDiff = graph['percentDifference']
+    q1 = np.percentile(percentDiff, 25)
+    q3 = np.percentile(percentDiff, 75)
+    iqr = q3 - q1
+    lowerBound = q1 - 1.5 * iqr
+    upperBound = q3 + 1.5 * iqr
+    graph['percentDifference'] = percentDiff[(percentDiff >= lowerBound) & (percentDiff <= upperBound)]
+
 #Save nontable data to a text file
 with open('jelinskiMoranda/results.txt', 'w') as f:
     f.write(f"Random seed used: {seed}\n")
     f.write(f"Estimated N: {NEst:.2f}, Actual N: {NReal:.4f}, Percent Difference: {((NEst - NReal) / NReal) * 100:.2f}%\n")
     f.write(f"Estimated phi: {phiEst:.4f}, Actual phi: {phiReal:.4f}, Percent Difference: {((phiEst - phiReal) / phiReal) * 100:.2f}%\n")
+    for fileName, graph in graphs.items():
+        f.write(f"{graph['title']} - Average Percent Difference: {np.mean(graph['percentDifference']):.2f}%\n")
