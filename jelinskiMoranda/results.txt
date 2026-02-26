@@ -1,3 +1,9 @@
 Estimated N: 249.21, Estimated phi: 0.0989
 Actual N: 250, Actual phi: 0.1000
 Random seed used: 1749434685
+Fixed time for smooth reliability: 0.1
+
+RELIABILITY EXPLANATION:
+- Smooth curves use fixed time point - show theoretical decreasing failure rate
+- Erratic curves use random intervals - show real-world variability
+- Both are correct, but smooth curves show the underlying J-M model trend

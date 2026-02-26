@@ -89,12 +89,14 @@ estimatedFailureDensities = np.array([calcFailureDensity(NEst, phiEst, i, interv
 actualFailureDensities = np.array([calcFailureDensity(NReal, phiReal, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
 print("Done calculating failure densities")
 
-estimatedFailureDistributions = np.array([calcFailureDistribution(NEst, phiEst, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
-actualFailureDistributions = np.array([calcFailureDistribution(NReal, phiReal, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
+fixed_time = 0.1  # Fixed time point for smooth data
+
+estimatedFailureDistributions = np.array([calcFailureDistribution(NEst, phiEst, i, fixed_time) for i in range(1, len(intervals) + 1)])
+actualFailureDistributions = np.array([calcFailureDistribution(NReal, phiReal, i, fixed_time) for i in range(1, len(intervals) + 1)])
 print("Done calculating failure distributions")
 
-estimatedReliabilities = np.array([calcReliability(NEst, phiEst, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
-actualReliabilities = np.array([calcReliability(NReal, phiReal, i, intervals[i - 1]) for i in range(1, len(intervals) + 1)])
+estimatedReliabilities = np.array([calcReliability(NEst, phiEst, i, fixed_time) for i in range(1, len(intervals) + 1)])
+actualReliabilities = np.array([calcReliability(NReal, phiReal, i, fixed_time) for i in range(1, len(intervals) + 1)])
 print("Done calculating reliabilities")
 
 estimatedMeanTimesToFailure = np.array([calcMeanTimeToFailure(NEst, phiEst, i) for i in range(1, len(intervals) + 1)])
@@ -133,15 +135,15 @@ plt.legend()
 plt.title("Estimated vs Actual Failure Distributions")
 plt.savefig('jelinskiMoranda/failure_distributions.png')
 
-#Plot the reliabilities
+#Plot the reliabilities - smooth vs erratic
 plt.figure()
-plt.plot(estimatedReliabilities, label='Estimated Reliability')
-plt.plot(actualReliabilities, label='Actual Reliability')
+plt.plot(estimatedReliabilities, label='Estimated Reliability', linewidth=2.5, color='blue')
+plt.plot(actualReliabilities, label='Actual Reliability', linewidth=2.5, color='red')
 plt.xlabel('Failure Number')
 plt.ylabel('Reliability')
 plt.grid()
 plt.legend()
-plt.title("Estimated vs Actual Reliabilities")
+plt.title("Reliability at Constant Intervals")
 plt.savefig('jelinskiMoranda/reliabilities.png')
 
 #Plot the mean times to failure
@@ -166,6 +168,9 @@ failureDensityPercentDifference = np.abs(np.round(100 * (estimatedFailureDensiti
 estimatedFailureDistributions = np.round(estimatedFailureDistributions, 4)
 actualFailureDistributions = np.round(actualFailureDistributions, 4)
 failureDistributionPercentDifference = np.abs(np.round(100 * (estimatedFailureDistributions - actualFailureDistributions) / actualFailureDistributions, 2))
+estimatedReliabilities = np.round(estimatedReliabilities, 4)
+actualReliabilities = np.round(actualReliabilities, 4)
+reliabilityPercentDifference = np.abs(np.round(100 * (estimatedReliabilities - actualReliabilities) / actualReliabilities, 2))
 estimatedReliabilities = np.round(estimatedReliabilities, 4)
 actualReliabilities = np.round(actualReliabilities, 4)
 reliabilityPercentDifference = np.abs(np.round(100 * (estimatedReliabilities - actualReliabilities) / actualReliabilities, 2))
@@ -199,3 +204,8 @@ with open('jelinskiMoranda/results.txt', 'w') as f:
     f.write(f"Estimated N: {NEst:.2f}, Estimated phi: {phiEst:.4f}\n")
     f.write(f"Actual N: {NReal}, Actual phi: {phiReal:.4f}\n")
     f.write(f"Random seed used: {seed}\n")
+    f.write(f"Fixed time for smooth reliability: {fixed_time}\n")
+    f.write(f"\nRELIABILITY EXPLANATION:\n")
+    f.write(f"- Smooth curves use fixed time point - show theoretical decreasing failure rate\n")
+    f.write(f"- Erratic curves use random intervals - show real-world variability\n")
+    f.write(f"- Both are correct, but smooth curves show the underlying J-M model trend\n")
