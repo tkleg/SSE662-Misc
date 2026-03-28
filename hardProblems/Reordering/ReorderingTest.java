@@ -15,6 +15,7 @@ public class ReorderingTest {
         System.out.println("All possible outputs: " + answers);
     }
 
+    //Simulate all possible orders of the 4 operations between the two threads, as well as possible values with stale/non-stale reads
     static void dfs(int w, int x, int y, int z, boolean[] done, Set<Answer> answers, StringBuilder order) {
         if (done[0] && done[1] && done[2] && done[3]) {
             Answer ans = new Answer(y, z);
@@ -43,34 +44,48 @@ public class ReorderingTest {
                 default -> "";
             };
             int len = order.length();
-            if (len > 0)
-                order.append(" -> ");
-            order.append(opName);
             switch (i) {
                 case T1_OP2 -> {
                     // t1 reads x into y
-                    // See current x
+                    if(len > 0)
+                        order.append(" -> ");
+                    order.append(opName).append(" CUR");
                     dfs(thisW, thisX, thisX, thisZ, nextDone, answers, order);
-                    // See stale x (original value)
+                    order.setLength(len);
+                    
+                    if(len > 0)
+                        order.append(" -> ");
+                    order.append(opName).append(" STALE");
                     dfs(thisW, thisX, ORIG_X, thisZ, nextDone, answers, order);
+                    order.setLength(len);
                 }
                 case T2_OP2 -> {
                     // t2 reads w into z
-                    // See current w
+                    if(len > 0)
+                        order.append(" -> ");
+                    order.append(opName).append(" CUR");
                     dfs(thisW, thisX, thisY, thisW, nextDone, answers, order);
-                    // See stale w (original value)
+                    order.setLength(len);
+
+                    if(len > 0)
+                        order.append(" -> ");
+                    order.append(opName).append(" STALE");
                     dfs(thisW, thisX, thisY, ORIG_W, nextDone, answers, order);
+                    order.setLength(len);
                 }
                 default -> {
                     // Normal write
+                    if(len > 0)
+                        order.append(" -> ");
+                    order.append(opName);
                     switch (i) {
                         case T1_OP1 -> thisW = 1;
                         case T2_OP1 -> thisX = 1;
                     }
                     dfs(thisW, thisX, thisY, thisZ, nextDone, answers, order);
+                    order.setLength(len);
                 }
             }
-            order.setLength(len); //backtrack by undoing changes prior to recursive calls
         }
     }
 
