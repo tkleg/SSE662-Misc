@@ -1,4 +1,4 @@
-package hardProblems.Reordering;
+package hard_problems.reordering;
 
 import java.util.HashSet;
 import java.util.Set;

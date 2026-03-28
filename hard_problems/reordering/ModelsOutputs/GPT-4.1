@@ -1,0 +1,38 @@
+This Java program demonstrates a classic example of a reordering problem in concurrent programming. Here’s what happens:
+
+### Original (non-volatile) version
+
+- Two threads run in parallel:
+  - t1: sets w = 1, then y = x
+  - t2: sets x = 1, then z = w
+- All variables are static and shared.
+
+#### Possible outputs (non-volatile)
+Because of instruction reordering and lack of synchronization, the following outputs are possible:
+- (0, 0): Both threads read the old values before the other writes. This is possible due to reordering and CPU caching.
+- (0, 1): t1 reads x before t2 writes x, t2 reads w after t1 writes w.
+- (1, 0): t2 reads w before t1 writes w, t1 reads x after t2 writes x.
+- (1, 1): Both threads read after the other writes.
+
+So, all four combinations are possible: (0,0), (0,1), (1,0), (1,1).
+
+---
+
+### If w and x are declared volatile
+
+Declaring w and x as volatile ensures:
+- Writes to w and x are immediately visible to all threads.
+- Reads/writes to volatile variables establish a happens-before relationship, preventing certain reorderings.
+
+#### Possible outputs (volatile w and x)
+- (0, 1): t1 reads x before t2 writes x, t2 reads w after t1 writes w.
+- (1, 0): t2 reads w before t1 writes w, t1 reads x after t2 writes x.
+- (1, 1): Both threads read after the other writes.
+
+**(0, 0) is no longer possible** because volatile prevents the reordering that would allow both threads to read the old values.
+
+---
+
+**Summary:**
+- Non-volatile: (0,0), (0,1), (1,0), (1,1)
+- Volatile w and x: (0,1), (1,0), (1,1) (but not (0,0))

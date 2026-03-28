@@ -1,6 +1,6 @@
-package hardProblems.Reordering;
+package hard_problems.reordering;
 
-import hardProblems.Reordering.ReorderingProblemLoop.Answer;
+import hard_problems.reordering.ReorderingProblemLoop.Answer;
 import java.util.HashSet;
 import java.util.Set;
 

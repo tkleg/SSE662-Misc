@@ -1,4 +1,4 @@
-package hardProblems.Reordering;
+package hard_problems.reordering;
 
 public class ReorderingProblem {
     static int w = 0, x = 0;
