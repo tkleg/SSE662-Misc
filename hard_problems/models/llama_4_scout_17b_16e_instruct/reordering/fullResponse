@@ -1,0 +1,75 @@
+Possible Outputs
+The possible outputs of this code are:
+
+(0, 0)
+(1, 0)
+(0, 1)
+Explanation
+The reason for these possible outputs is due to the reordering of operations by the JVM and the CPU. The CountDownLatch ensures that both threads start executing after both have called countDown(), but it does not guarantee the order in which they execute the subsequent operations.
+
+Non-Volatile Code Snippet
+The existing code is already guaranteed to produce all possible outputs in a single run:
+
+Java
+
+Copy
+package hard_problems.reordering;
+
+import java.util.concurrent.CountDownLatch;
+
+public class ReorderingProblem {
+    static int w = 0, x = 0;
+    static int y = 0, z = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(2);
+
+        Thread t1 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); }catch(InterruptedException e){}
+            w = 1;
+            y = x;
+        });
+
+        Thread t2 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); }catch(InterruptedException e){}
+            x = 1;
+            z = w;
+        });
+
+        t1.start();
+        t2.start();
+
+        t1.join();
+        t2.join();
+
+        System.out.println("Output: (" + y + ", " + z + ")");
+    }
+}
+Volatile Code Snippet
+If w and x are changed to volatile integers, the possible outputs are still:
+
+(0, 0)
+(1, 0)
+(0, 1)
+However, the volatile keyword only ensures that changes to w and x are visible across threads, but it does not prevent reordering of operations. To demonstrate this, you can use the same code with w and x declared as volatile:
+
+Java
+
+Copy
+package hard_problems.reordering;
+
+import java.util.concurrent.CountDownLatch;
+
+public class ReorderingProblem {
+    static volatile int w = 0, x = 0;
+    static int y = 0, z = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(2);
+
+        Thread t1 = new Thread(() -> {
+
+
+

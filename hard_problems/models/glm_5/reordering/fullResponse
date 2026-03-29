@@ -1,0 +1,119 @@
+Direct Answer
+1. Non-Volatile Case Possible Outputs: (0, 1), (1, 0), (1, 1), (0, 0).
+
+Explanation: Without the volatile keyword, the Java Memory Model allows instructions to be reordered. Specifically, the write operation (w = 1 or x = 1) and the read operation (y = x or z = w) in each thread are independent. The JVM or CPU may execute the read before the write (effectively swapping the order within the thread).
+If Thread 1 sees x=0 and Thread 2 sees w=0, both threads appear to have executed the read before the write. This "reordering" results in y=0 and z=0, producing the output (0, 0).
+2. Volatile Case Possible Outputs: (0, 1), (1, 0), (1, 1).
+
+Explanation: Declaring w and x as volatile establishes a Happens-Before relationship.
+A volatile write to a variable happens-before any subsequent read of that same variable.
+Furthermore, JMM rules state that actions performed by a thread before a volatile write are visible to any thread that sees that write.
+Crucially, the JMM forbids reordering of volatile writes with subsequent volatile reads in the program order (or establishing an order equivalent to no-read-before-write).
+If Thread 1 reads x as 0, it implies its write to w hasn't happened yet or hasn't been seen by Thread 2. But for Thread 2 to read w as 0, it implies its write to x hasn't happened yet. This creates a cyclic dependency (W_w < R_w < W_x < R_x < W_w) which is impossible in a total order. Thus, it is impossible for both threads to see 0 simultaneously. The output (0, 0) is impossible.
+Code Snippet 1: Non-Volatile
+This snippet runs the logic in a loop to increase the probability of encountering the reordering edge case (0, 0).
+
+Java
+
+Copy
+package hard_problems.reordering;
+import java.util.concurrent.CountDownLatch;
+import java.util.HashSet;
+import java.util.Set;
+
+public class ReorderingProblemNonVolatile {
+    static int w = 0, x = 0;
+    static int y, z;
+
+    public static void main(String[] args) throws InterruptedException {
+        Set<String> outputs = new HashSet<>();
+        
+        // Run enough times to statistically capture all reorderings
+        for (int i = 0; i < 100_000; i++) {
+            // Reset shared variables
+            w = 0; x = 0;
+            
+            CountDownLatch latch = new CountDownLatch(2);
+            
+            Thread t1 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
+                w = 1;
+                y = x; // Reordering possible: this might happen before w=1
+            });
+
+            Thread t2 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
+                x = 1;
+                z = w; // Reordering possible: this might happen before x=1
+            });
+
+            t1.start();
+            t2.start();
+            t1.join();
+            t2.join();
+            
+            outputs.add("(" + y + ", " + z + ")");
+            
+            // Optimization: Stop early if we found the rare case
+            if (outputs.size() == 4) break; 
+        }
+
+        System.out.println("Possible Outputs Found: " + outputs);
+    }
+}
+Code Snippet 2: Volatile
+This snippet adds the volatile keyword. The output (0, 0) will never be produced.
+
+Java
+
+Copy
+package hard_problems.reordering;
+import java.util.concurrent.CountDownLatch;
+import java.util.HashSet;
+import java.util.Set;
+
+public class ReorderingProblemVolatile {
+    // Adding volatile prevents reordering of writes with subsequent reads
+    static volatile int w = 0, x = 0;
+    static int y, z;
+
+    public static void main(String[] args) throws InterruptedException {
+        Set<String> outputs = new HashSet<>();
+        boolean foundZeroZero = false;
+
+        for (int i = 0; i < 100_000; i++) {
+            w = 0; x = 0;
+            
+            CountDownLatch latch = new CountDownLatch(2);
+            
+            Thread t1 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
+                w = 1;
+                y = x;
+            });
+
+            Thread t2 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
+                x = 1;
+                z = w;
+            });
+
+            t1.start();
+            t2.start();
+            t1.join();
+            t2.join();
+            
+            if (y == 0 && z == 0) {
+                foundZeroZero = true;
+            }
+            outputs.add("(" + y + ", " + z + ")");
+        }
+
+        System.out.println("Possible Outputs Found: " + outputs);
+        System.out.println("Was (0, 0) found? " + foundZeroZero);
+    }
+}

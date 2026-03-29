@@ -1,0 +1,108 @@
+Possible outputs:
+
+(0, 0)
+(0, 1)
+(1, 0)
+(1, 1)
+Non-volatile code:
+
+Java
+
+Copy
+package hard_problems.reordering;
+
+
+import java.util.concurrent.CountDownLatch;
+
+
+public class ReorderingProblem {
+    static int w = 0, x = 0;
+    static int y = 0, z = 0;
+
+
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(2);
+
+
+        Thread t1 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); }catch(InterruptedException e){}
+            w = 1;
+            y = x;
+        });
+
+
+        Thread t2 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); }catch(InterruptedException e){}
+            x = 1;
+            z = w;
+        });
+
+
+        t1.start();
+        t2.start();
+
+
+        t1.join();
+        t2.join();
+
+
+        System.out.println("Output: (" + y + ", " + z + ")");
+    }
+
+
+}
+Volatile code:
+
+Java
+
+Copy
+package hard_problems.reordering;
+
+
+import java.util.concurrent.CountDownLatch;
+
+
+public class ReorderingProblem {
+    static volatile int w = 0, x = 0;
+    static volatile int y = 0, z = 0;
+
+
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(2);
+
+
+        Thread t1 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); }catch(InterruptedException e){}
+            w = 1;
+            y = x;
+        });
+
+
+        Thread t2 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); }catch(InterruptedException e){}
+            x = 1;
+            z = w;
+        });
+
+
+        t1.start();
+        t2.start();
+
+
+        t1.join();
+        t2.join();
+
+
+        System.out.println("Output: (" + y + ", " + z + ")");
+    }
+
+
+}
+Explanation:
+
+Non-volatile variables are shared between threads, but each thread has its own local copy of the variable. This can lead to race conditions, where the order in which the threads access and modify the variables is not deterministic.
+Volatile variables are shared between threads, and all threads access and modify the same copy of the variable. This eliminates race conditions, as all threads are working on the same shared memory.

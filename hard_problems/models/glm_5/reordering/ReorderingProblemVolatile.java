@@ -1,22 +1,23 @@
-package hard_problems.models.deepseek_v3_2;
+package hard_problems.models.glm_5.reordering;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
-public class VolatileReordering {
+public class ReorderingProblemVolatile {
+    // Adding volatile prevents reordering of writes with subsequent reads
     static volatile int w = 0, x = 0;
-    static int y = 0, z = 0;
+    static int y, z;
 
     public static void main(String[] args) throws InterruptedException {
         Set<String> outputs = new HashSet<>();
-        int iterations = 0;
-        
-        while (outputs.size() < 3 && iterations < 100000) {
-            iterations++;
-            w = 0; x = 0; y = 0; z = 0;
-            CountDownLatch latch = new CountDownLatch(2);
+        boolean foundZeroZero = false;
 
+        for (int i = 0; i < 100_000; i++) {
+            w = 0; x = 0;
+            
+            CountDownLatch latch = new CountDownLatch(2);
+            
             Thread t1 = new Thread(() -> {
                 latch.countDown();
                 try { latch.await(); } catch (InterruptedException e) {}
@@ -33,16 +34,16 @@ public class VolatileReordering {
 
             t1.start();
             t2.start();
-
             t1.join();
             t2.join();
-
+            
+            if (y == 0 && z == 0) {
+                foundZeroZero = true;
+            }
             outputs.add("(" + y + ", " + z + ")");
         }
 
-        System.out.println("All possible outputs for volatile:");
-        for (String s : outputs) {
-            System.out.println(s);
-        }
+        System.out.println("Possible Outputs Found: " + outputs);
+        System.out.println("Was (0, 0) found? " + foundZeroZero);
     }
 }

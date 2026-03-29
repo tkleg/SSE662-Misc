@@ -1,0 +1,141 @@
+Direct answer
+
+w, x non‑volatile	w, x volatile
+Possible values of (y, z)	(0,0), (0,1), (1,0), (1,1)	(0,0), (0,1), (1,0), (1,1)
+Making w and x volatile does not remove any of the four outcomes.
+The reason is that the volatile guarantees only give a happens‑before edge for reads and writes of the same variable.
+In this test each thread writes one variable and reads the other variable, so no volatile‑induced happens‑before edge is created between the two threads. Consequently the program can still exhibit all four combinations, just as with plain fields.
+
+Code snippets
+Both snippets repeat the experiment until every possible output has been seen at least once.
+When the set of observed results reaches size 4 the loop stops – this is guaranteed to terminate because each iteration has a non‑zero probability of producing each of the four outcomes.
+
+1. Non‑volatile version
+Java
+
+Copy
+package hard_problems.reordering;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+
+public class ReorderingProblem_NonVolatile {
+
+    // plain fields
+    static int w = 0, x = 0;
+    static int y = 0, z = 0;
+
+    private static void runOneIteration() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(2);
+        w = x = y = z = 0;               // reset shared state
+
+        Thread t1 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); } catch (InterruptedException ignored) {}
+            w = 1;                       // volatile write would be here if we changed the field
+            y = x;                       // read of the *other* field
+        });
+
+        Thread t2 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); } catch (InterruptedException ignored) {}
+            x = 1;
+            z = w;                       // read of the *other* field
+        });
+
+        t1.start();
+        t2.start();
+        t1.join();
+        t2.join();
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        Set<String> seen = new HashSet<>();
+        int iteration = 0;
+        while (seen.size() < 4) {
+            runOneIteration();
+            String out = "(" + y + ", " + z + ")";
+            seen.add(out);
+            System.out.printf("Iteration %3d → %s%n", iteration, out);
+            iteration++;
+        }
+        System.out.println("\nAll four possible outputs observed: " + seen);
+    }
+}
+2. Volatile version ```java
+package hard_problems.reordering;
+
+import java.util.HashSet; import java.util.Set; import java.util.concurrent.CountDownLatch;
+
+public class ReorderingProblem_Volatile {
+
+Bash
+
+Copy
+// *** make w and x volatile ***
+static volatile int w = 0, x = 0;
+static int y = 0, z = 0;              // y and z need not be volatile
+
+private static void runOneIteration() throws InterruptedException {
+    CountDownLatch latch = new CountDownLatch(2);
+    w = x = y = z = 0;               // reset        Thread t1 = new Thread(() -> {
+        latch.countDown();
+        try { latch.await(); } catch (InterruptedException ignored) {}
+        w = 1;                       // volatile write
+        y = x;                       // volatile read of x
+    });
+
+    Thread t2 = new Thread(() -> {
+        latch.countDown();
+        try { latch.await(); } catch (InterruptedException ignored) {}
+        x = 1;                       // volatile write
+        z = w;                       // volatile read of w
+    });
+
+    t1.start();
+    t2.start();
+    t1.join();
+    t2.join();
+}
+
+public static void main(String[] args) throws InterruptedException {
+    Set<String> seen = new HashSet<>();
+    int iteration = 0;
+    while (seen.size() < 4) {
+        runOneIteration();
+        String out = "(" + y + ", " + z + ")";
+        seen.add(out);
+        System.out.printf("Iteration %3d → %s%n", iteration, out);
+        iteration++;
+    }
+    System.out.println("\nAll four possible outputs observed: " + seen);
+}
+}
+
+Bash
+
+Copy
+
+**What the snippets do**
+
+1. Reset the shared fields (`w`, `x`, `y`, `z`) to zero.  
+2. Create two threads that first `countDown` on a `CountDownLatch`, then `await` until both threads have passed the latch (so they start **simultaneously** after the barrier).  
+3. Each thread performs a write to its own field and then a read of the other field.  
+4. After both threads finish, the program records the pair `(y, z)`.  
+5. The loop repeats the experiment, collecting distinct outcomes in a `HashSet`.  
+6. As soon as the set contains all four pairs, the loop stops and the program prints the complete set.
+
+Running either version will eventually print something like:
+
+Iteration 0 → (0, 0) Iteration 1 → (1, 0) Iteration 2 → (0, 1) Iteration 3 → (1, 1)
+
+All four possible outputs observed: [(0, 0), (1, 0), (0, 1), (1, 1)]
+
+Bash
+
+Copy
+
+(The exact order varies from run to run, but all four pairs are guaranteed to appear.)  
+
+Thus, both the non‑volatile and the volatile versions admit the same four possible outputs, and the provided code snippets will observe each of them in a single execution.

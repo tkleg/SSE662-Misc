@@ -1,0 +1,110 @@
+Direct Answer
+Non-volatile case: All four outputs are possible:
+(0,0), (0,1), (1,0), (1,1)
+
+Volatile case: Only three outputs are possible:
+(0,1), (1,0), (1,1)
+The output (0,0) is impossible due to happens-before constraints from volatile writes.
+
+Code Snippets
+1. Non-volatile Version (Captures all 4 outputs)
+Java
+
+Copy
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+
+public class NonVolatileReordering {
+    static int w = 0, x = 0;
+    static int y = 0, z = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        Set<String> outputs = new HashSet<>();
+        int iterations = 0;
+        
+        while (outputs.size() < 4 && iterations < 100000) {
+            iterations++;
+            w = 0; x = 0; y = 0; z = 0;
+            CountDownLatch latch = new CountDownLatch(2);
+
+            Thread t1 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
+                w = 1;
+                y = x;
+            });
+
+            Thread t2 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
+                x = 1;
+                z = w;
+            });
+
+            t1.start();
+            t2.start();
+
+            t1.join();
+            t2.join();
+
+            outputs.add("(" + y + ", " + z + ")");
+        }
+
+        System.out.println("All possible outputs for non-volatile:");
+        for (String s : outputs) {
+            System.out.println(s);
+        }
+    }
+}
+2. Volatile Version (Captures all 3 possible outputs)
+Java
+
+Copy
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+
+public class VolatileReordering {
+    static volatile int w = 0, x = 0;
+    static int y = 0, z = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        Set<String> outputs = new HashSet<>();
+        int iterations = 0;
+        
+        while (outputs.size() < 3 && iterations < 100000) {
+            iterations++;
+            w = 0; x = 0; y = 0; z = 0;
+            CountDownLatch latch = new CountDownLatch(2);
+
+            Thread t1 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
+                w = 1;
+                y = x;
+            });
+
+            Thread t2 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
+                x = 1;
+                z = w;
+            });
+
+            t1.start();
+            t2.start();
+
+            t1.join();
+            t2.join();
+
+            outputs.add("(" + y + ", " + z + ")");
+        }
+
+        System.out.println("All possible outputs for volatile:");
+        for (String s : outputs) {
+            System.out.println(s);
+        }
+    }
+}
+Both programs run repeated trials until they observe all possible outputs for their respective memory semantics, then display them in a single execution.

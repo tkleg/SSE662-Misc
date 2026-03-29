@@ -1,0 +1,123 @@
+Direct answer
+
+Variables           Possible outputs (y, z)
+Non‑volatile w, x	(0,0), (0,1), (1,0), (1,1)
+Volatile w, x	(0,1), (1,0), (1,1) – (0,0) can never occur
+Why these outputs occur
+
+Non‑volatile
+The two statements in each thread are independent, so the compiler/CPU may reorder them.
+w=1 and y=x can execute in either order, and similarly x=1 and z=w.
+Because there is no synchronization between the write of one variable and the read of the other, each read may see either the initial value (0) or the value written by the other thread (1). All four combinations are therefore possible.
+
+Volatile
+volatile forbids reordering of a volatile write with any preceding operation and of a volatile read with any subsequent operation. Within each thread the order is fixed (w=1 before y=x, x=1 before z=w).
+The only possible interleavings are those that preserve those orders, which yields the three combinations above; the (0,0) case would require a cycle in the order (y=x before x=1 and z=w before w=1), violating the thread‑local ordering constraints.
+
+Code snippets that (eventually) show all possible outputs in a single run
+The two programs below repeatedly execute the original experiment until every distinct result has been observed, then print the set. This is a common way to “guarantee” seeing every possibility in one JVM execution.
+
+1. Non‑volatile version (can produce all four tuples)
+Java
+
+Copy
+package hard_problems.reordering;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+
+public class NonVolatileReorderingDemo {
+    static int w = 0, x = 0;
+    static int y = 0, z = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        Set<String> seen = new HashSet<>();
+        final int maxIterations = 1_000_000; // enough to see all combos on most hardware
+
+        for (int i = 0; i < maxIterations; i++) {
+            // Reset state
+            w = 0; x = 0; y = 0; z = 0;
+
+            CountDownLatch latch = new CountDownLatch(2);
+
+            Thread t1 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                w = 1;
+                y = x;   // read of non‑volatile x
+            });
+
+            Thread t2 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                x = 1;
+                z = w;   // read of non‑volatile w
+            });
+
+            t1.start();
+            t2.start();
+            t1.join();
+            t2.join();
+
+            seen.add("(" + y + ", " + z + ")");
+            if (seen.size() == 4) {
+                System.out.println("All four outputs observed after " + (i + 1) + " iterations.");
+                break;
+            }
+        }
+        System.out.println("Possible outputs (non‑volatile): " + seen);
+    }
+}
+2. Volatile version (can produce the three allowed tuples)
+Java
+
+Copy
+package hard_problems.reordering;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+
+public class VolatileReorderingDemo {
+    static volatile int w = 0, x = 0;
+    static int y = 0, z = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        Set<String> seen = new HashSet<>();
+        final int maxIterations = 1_000_000;
+
+        for (int i = 0; i < maxIterations; i++) {
+            w = 0; x = 0; y = 0; z = 0;
+
+            CountDownLatch latch = new CountDownLatch(2);
+
+            Thread t1 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                w = 1;          // volatile write
+                y = x;          // volatile read of x
+            });
+
+            Thread t2 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                x = 1;          // volatile write
+                z = w;          // volatile read of w
+            });
+
+            t1.start();
+            t2.start();
+            t1.join();
+            t2.join();
+
+            seen.add("(" + y + ", " + z + ")");
+            if (seen.size() == 3) {
+                System.out.println("All three outputs observed after " + (i + 1) + " iterations.");
+                break;
+            }
+        }
+        System.out.println("Possible outputs (volatile): " + seen);
+    }
+}
+Both programs execute the original experiment many times inside a single main run, collect every distinct result, and stop once the full set is obtained. On most hardware you will see the four (or three) different tuples printed after a relatively small number of iterations.

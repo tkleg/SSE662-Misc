@@ -1,0 +1,75 @@
+Direct Answer
+Scenario
+Possible Outputs
+Non-volatile w, x	(0, 0), (0, 1), (1, 0), (1, 1)
+Volatile w, x	(0, 0), (0, 1), (1, 0), (1, 1)
+Code Snippets
+1. Non-Volatile Version (Original)
+Java
+
+Copy
+package hard_problems.reordering;
+
+import java.util.concurrent.CountDownLatch;
+
+public class ReorderingProblem {
+    static int w = 0, x = 0;
+    static int y = 0, z = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(2);
+        Thread t1 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); } catch(InterruptedException e) {}
+            w = 1;
+            y = x;
+        });
+        Thread t2 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); } catch(InterruptedException e) {}
+            x = 1;
+            z = w;
+        });
+        t1.start();
+        t2.start();
+        t1.join();
+        t2.join();
+        System.out.println("Output: (" + y + ", " + z + ")");
+    }
+}
+Why it produces all outputs: The CountDownLatch ensures memory visibility for actions before countDown() (none here), but writes after await() (w=1, x=1) are not ordered between threads. Without volatile, threads may see stale cached values, allowing all 4 outputs.
+
+2. Volatile Version (w, x marked volatile)
+Java
+
+Copy
+package hard_problems.reordering;
+
+import java.util.concurrent.CountDownLatch;
+
+public class ReorderingProblemVolatile {
+    static volatile int w = 0, x = 0;
+    static int y = 0, z = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(2);
+        Thread t1 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); } catch(InterruptedException e) {}
+            w = 1;
+            y = x;
+        });
+        Thread t2 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); } catch(InterruptedException e) {}
+            x = 1;
+            z = w;
+        });
+        t1.start();
+        t2.start();
+        t1.join();
+        t2.join();
+        System.out.println("Output: (" + y + ", " + z + ")");
+    }
+}
+Why it produces all outputs: volatile ensures immediate visibility of writes to w/x, but does not order operations across different variables. Thus, interleavings like (0,0) (both reads before writes) or (1,1) (both writes before reads) are still possible. The CountDownLatch provides the necessary happens-before for memory consistency, but volatile only guarantees visibility for individual variables, not cross-variable ordering.

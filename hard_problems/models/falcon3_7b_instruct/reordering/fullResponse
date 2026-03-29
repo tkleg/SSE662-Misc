@@ -1,0 +1,99 @@
+Non-Volatile Integers
+In the given code, without the volatile keyword, the behavior of the program can be unpredictable due to the lack of memory visibility guarantees between threads. The possible outputs can vary based on the scheduling of the threads and the order in which the writes and reads occur.
+
+Possible Outputs:
+
+(0, 0): Both threads might execute their await before setting their respective variables.
+(1, 0): Thread t1 sets y = x before t2 sets x = 1.
+(0, 1): Thread t2 sets z = w before t1 sets w = 1.
+(1, 1): Both threads set their respective variables after the await call.
+Code Snippet for Non-Volatile:
+
+Java
+
+Copy
+package hard_problems.reordering;
+
+import java.util.concurrent.CountDownLatch;
+
+public class ReorderingProblem {
+    static int w = 0, x = 0;
+    static int y = 0, z = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(2);
+
+        Thread t1 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); } catch (InterruptedException e) {}
+            w = 1;
+            y = x;
+        });
+
+        Thread t2 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); } catch (InterruptedException e) {}
+            x = 1;
+            z = w;
+        });
+
+        t1.start();
+        t2.start();
+
+        t1.join();
+        t2.join();
+
+        System.out.println("Output: (" + y + ", " + z + ")");
+    }
+}
+Volatile Integers
+When w, x, y, and z are declared as volatile, the Java Memory Model ensures that changes to these variables are always visible to all threads. This means that once a write to a volatile variable is complete, all subsequent reads of that variable by any thread will see the most recent value.
+
+Possible Outputs with Volatile:
+
+With volatile keyword, the only possible outputs are:
+
+(0, 0): Both threads might execute their await before setting their respective variables.
+(1, 1): Both threads set their respective variables after the await call.
+Code Snippet for Volatile:
+
+Java
+
+Copy
+package hard_problems.reordering;
+
+import java.util.concurrent.CountDownLatch;
+
+public class ReorderingProblem {
+    static volatile int w = 0, x = 0;
+    static volatile int y = 0, z = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(2);
+
+        Thread t1 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); } catch (InterruptedException e) {}
+            w = 1;
+            y = x;
+        });
+
+        Thread t2 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); } catch (InterruptedException e) {}
+            x = 1;
+            z = w;
+        });
+
+        t1.start();
+        t2.start();
+
+        t1.join();
+        t2.join();
+
+        System.out.println("Output: (" + y + ", " + z + ")");
+    }
+}
+Summary
+Non-Volatile: Outputs can be (0, 0), (1, 0), (0, 1), or (1, 1).
+Volatile: Outputs can only be (0, 0) or (1,

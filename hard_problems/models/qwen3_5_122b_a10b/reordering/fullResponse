@@ -1,0 +1,123 @@
+Direct Answer
+Possible Outputs: For both the non-volatile and volatile versions of w and x, the possible outputs are:
+
+(0, 0)
+(0, 1)
+(1, 0)
+(1, 1)
+Explanation:
+
+Non-Volatile: Without volatile, the Java Memory Model allows both instruction reordering (e.g., y=x executing before w=1) and visibility issues (writes not immediately visible to other threads). This allows any combination of reads to see old (0) or new (1) values.
+Volatile: Making w and x volatile ensures visibility (writes are immediately visible to other threads) and prevents reordering of operations across the volatile variable within the same thread (e.g., w=1 cannot be reordered after y=x). However, volatile does not establish a happens-before relationship between the two threads' operations relative to each other (it does not serialize the threads). Therefore, t1 can still read x before t2 writes it, and t2 can read w before t1 writes it. All four interleavings remain possible.
+Code Snippets
+Below are two complete, runnable classes. Each contains a main method that loops repeatedly until it has observed all 4 unique outputs in a single execution, satisfying the requirement to guarantee all outputs are produced.
+
+1. Non-Volatile Version
+Java
+
+Copy
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+
+public class ReorderingNonVolatile {
+    // Non-volatile static variables
+    static int w = 0, x = 0;
+    static int y = 0, z = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        Set<String> observedOutputs = new HashSet<>();
+        
+        // Loop until we have observed all 4 possible combinations
+        while (observedOutputs.size() < 4) {
+            resetVariables();
+            
+            CountDownLatch latch = new CountDownLatch(2);
+            Thread t1 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
+                
+                w = 1;
+                y = x;
+            });
+            
+            Thread t2 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
+                
+                x = 1;
+                z = w;
+            });
+            
+            t1.start();
+            t2.start();
+            t1.join();
+            t2.join();
+            
+            String output = "(" + y + ", " + z + ")";
+            observedOutputs.add(output);
+        }
+        
+        System.out.println("All possible outputs observed: " + observedOutputs);
+    }
+    
+    private static void resetVariables() {
+        w = 0; x = 0; y = 0; z = 0;
+    }
+}
+2. Volatile Version
+Java
+
+Copy
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+
+public class ReorderingVolatile {
+    // Volatile static variables
+    static volatile int w = 0, x = 0;
+    static int y = 0, z = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        Set<String> observedOutputs = new HashSet<>();
+        
+        // Loop until we have observed all 4 possible combinations
+        while (observedOutputs.size() < 4) {
+            resetVariables();
+            
+            CountDownLatch latch = new CountDownLatch(2);
+            Thread t1 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
+                
+                w = 1;
+                y = x;
+            });
+            
+            Thread t2 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
+                
+                x = 1;
+                z = w;
+            });
+            
+            t1.start();
+            t2.start();
+            t1.join();
+            t2.join();
+            
+            String output = "(" + y + ", " + z + ")";
+            observedOutputs.add(output);
+        }
+        
+        System.out.println("All possible outputs observed: " + observedOutputs);
+    }
+    
+    private static void resetVariables() {
+        w = 0; x = 0; y = 0; z = 0;
+    }
+}
+
+
+

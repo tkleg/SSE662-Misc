@@ -1,4 +1,4 @@
-package hard_problems.models.kimi_k2_thinking;
+package hard_problems.models.kimi_k2_thinking.reordering;
 
 import java.util.HashSet;
 import java.util.Set;
