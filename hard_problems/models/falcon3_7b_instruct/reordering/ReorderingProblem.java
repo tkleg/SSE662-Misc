@@ -2,9 +2,9 @@ package hard_problems.models.falcon3_7b_instruct.reordering;
 
 import java.util.concurrent.CountDownLatch;
 
-public class VolatileReordering {
-    static volatile int w = 0, x = 0;
-    static volatile int y = 0, z = 0;
+public class ReorderingProblem {
+    static int w = 0, x = 0;
+    static int y = 0, z = 0;
 
     public static void main(String[] args) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(2);
