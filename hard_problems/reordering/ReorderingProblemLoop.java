@@ -1,22 +1,27 @@
 package hard_problems.reordering;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 public class ReorderingProblemLoop {
     static int w, x, y, z;
 
     public static void main(String[] args) throws InterruptedException {
-        Set<Answer> answers = new HashSet<>();
+        Map<Answer, Integer> answers = new HashMap<>();
         for (int i = 0; i < 100000; i++) {
             w = x = y = z = 0;
-
+            CountDownLatch latch = new CountDownLatch(2);
             Thread t1 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
                 w = 1;
                 y = x;
             });
 
             Thread t2 = new Thread(() -> {
+                latch.countDown();
+                try { latch.await(); } catch (InterruptedException e) {}
                 x = 1;
                 z = w;
             });
@@ -27,7 +32,8 @@ public class ReorderingProblemLoop {
             t1.join();
             t2.join();
 
-            answers.add(new Answer(y, z));
+            Answer answer = new Answer(y, z);
+            answers.put(answer, answers.getOrDefault(answer, 0) + 1);
         }
         System.out.println("All possible outputs: " + answers);
     }

@@ -1,16 +1,24 @@
 package hard_problems.reordering;
 
+import java.util.concurrent.CountDownLatch;
+
 public class ReorderingProblem {
     static int w = 0, x = 0;
     static int y = 0, z = 0;
 
     public static void main(String[] args) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(2);
+
         Thread t1 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); }catch(InterruptedException e){}
             w = 1;
             y = x;
         });
 
         Thread t2 = new Thread(() -> {
+            latch.countDown();
+            try { latch.await(); }catch(InterruptedException e){}
             x = 1;
             z = w;
         });
