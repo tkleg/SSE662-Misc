@@ -1,0 +1,35 @@
+Output:
+
+HashMap: 1 2 3
+
+TreeMap: c:3 aa:1 bb:2 dd:4 fff:6
+
+LinkedHashMap: 1 2 3 4 5
+
+IdentityHashMap: 127 128 127
+
+Reasoning:
+
+HashMap:
+
+Keys are hashed based on their hashCode() method, which returns the hash code of the key.
+The put method inserts a key-value pair into the map, and the key is inserted into the hash table based on its hash code.
+When a key is updated, its hash code changes, and the key is re-inserted into the hash table.
+TreeMap:
+
+Keys are sorted in ascending order based on their natural ordering.
+The merge method merges two keys with the same value, and the new key is inserted into the map in the correct position.
+LinkedHashMap:
+
+Keys are inserted in the order they are inserted into the map.
+The put method inserts a key-value pair into the map, and the key is inserted into the linked list of keys in the order it was inserted.
+IdentityHashMap:
+
+Keys are identified by their identity, not their hash code.
+The put method inserts a key-value pair into the map, and the key is inserted into the map based on its identity.
+When a key is updated, its identity changes, and the key is re-inserted into the map.
+Additional Notes:
+
+The Key class is used to encapsulate the keys in the maps, and it overrides the hashCode() and equals() methods to ensure that keys are compared based on their val field.
+The computeIfAbsent method is used to insert a key-value pair into the map if the key does not already exist.
+The merge method is used to merge two keys with the same value into a single key in the map.

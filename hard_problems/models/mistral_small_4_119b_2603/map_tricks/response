@@ -1,0 +1,71 @@
+Exact Output:
+Bash
+
+Copy
+HashMap:
+3:one 1:two 3:three
+
+TreeMap:
+c:8 bb:2 fff:6
+
+LinkedHashMap:
+1:A 2:B 5:E
+
+IdentityHashMap:
+127:X 128:Z 128:W
+Reasoning for Each Map:
+1. HashMap<Key, String>
+Key Mutability Issue: The Key class is mutable (via val changes), breaking HashMap invariants.
+Initial State:
+k1 (val=1) → "one"
+k2 (val=2) → "two"
+k3 (val=3) → "three"
+After val Changes:
+k1.val = 3, k2.val = 1, k3.val = 3
+Problem: k1 and k3 now have the same val=3, making them equal per equals(), but they are stored as separate entries (due to insertion-time hashCodes).
+computeIfAbsent Calls:
+new Key(1) equals k2 (val=1), so no change.
+new Key(3) equals k1/k3 (val=3), so no change.
+Final Entries:
+k1 (val=3) → "one" (printed as "3:one")
+k2 (val=1) → "two" (printed as "1:two")
+k3 (val=3) → "three" (printed as "3:three")
+Output Order: Bucket order (1 → 2 → 3), resulting in 3:one 1:two 3:three.
+2. TreeMap<String, Integer> (Comparator: Length-Based)
+Comparator: (a, b) -> a.length() - b.length() (sorts by string length).
+Operations:
+merge("dd", 4, ...) → "dd":4 (len=2)
+merge("fff", 6, ...) → "fff":6 (len=3)
+put("c", 3) → "c":3 (len=1)
+put("aa", 1) → Replaces "dd" (len=2) with "aa":1 (same length).
+put("bb", 2) → Replaces "aa" with "bb":2 (same length).
+merge("e", 5, ...) → Updates "c" (len=1) to 3 + 5 = 8.
+Final Entries:
+"c":8 (len=1)
+"bb":2 (len=2)
+"fff":6 (len=3)
+Output Order: Sorted by length → c:8 bb:2 fff:6.
+3. LinkedHashMap<Integer, String> (Access Order, Remove Eldest >3)
+Operations:
+put(4, "D") → {4:"D"}
+put(3, "C") → {4:"D", 3:"C"}
+get(2) → No change.
+get(1) → No change.
+put(1, "A") → {4:"D", 3:"C", 1:"A"}
+put(2, "B") → Size=4 → Removes eldest (4:"D"). Now {3:"C", 1:"A", 2:"B"}.
+put(5, "E") → Size=4 → Removes eldest (3:"C"). Final {1:"A", 2:"B", 5:"E"}.
+Output Order: Access order → 1:A 2:B 5:E.
+4. IdentityHashMap<Integer, String> (Uses == for Equality)
+Integer Caching:
+a = 127, b = 127 → Same instance (a == b).
+c = 128, d = 128 → Different instances (c != d).
+Operations:
+put(b, "Y") → 127:"Y"
+put(a, "X") → Replaces 127 with "X".
+put(c, "Z") → 128:"Z"
+put(d, "W") → 128:"W" (new entry).
+Final Entries:
+127:"X"
+128:"Z"
+128:"W"
+Output Order: Insertion order → 127:X 128:Z 128:W.

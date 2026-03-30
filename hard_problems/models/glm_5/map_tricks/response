@@ -1,0 +1,80 @@
+Based on the provided Java code snippet, here is the exact output and the reasoning for each map.
+
+Exact Output
+Text
+
+Copy
+HashMap:
+3:one 1:X 1:two 3:three 
+TreeMap:
+c:8 dd:2 fff:6 
+LinkedHashMap:
+1:A 2:B 5:E 
+IdentityHashMap:
+127:X 128:Z 128:W 
+Reasoning for each map
+1. HashMap (hashMap)
+
+Initialization & Population: The map is populated with keys k1 (val 1), k2 (val 2), and k3 (val 3).
+Buckets: 1 (k1), 2 (k2), 3 (k3).
+Mutation: The values of the key fields are mutated.
+k1.val becomes 3. k1 is physically stored in bucket 1, but its hash/code now points to bucket 3.
+k2.val becomes 1. k2 is physically stored in bucket 2, but its hash/code now points to bucket 1.
+computeIfAbsent Logic:
+hashMap.computeIfAbsent(new Key(1), ...):
+new Key(1) has hash 1. It looks in bucket 1.
+Bucket 1 contains k1 (val 3). k1.equals(new Key(1)) checks 3 == 1, which is false.
+Since it's absent, the mapping function runs: hashMap.getOrDefault(new Key(2), "X").
+new Key(2) has hash 2. Looks in bucket 2.
+Bucket 2 contains k2 (val 1). k2.equals(new Key(2)) checks 1 == 2, which is false.
+Returns default "X".
+Entry new Key(1) -> "X" is added to bucket 1.
+hashMap.computeIfAbsent(new Key(3), ...):
+new Key(3) has hash 3. Looks in bucket 3.
+Bucket 3 contains k3 (val 3). k3.equals(new Key(3)) checks 3 == 3, which is true.
+Key found. Value "three" is returned. Map remains unchanged.
+Iteration: Iterates by bucket order (1, 2, 3).
+Bucket 1: Contains k1 (printed as 3) and new Key(1) (printed as 1). Order is insertion order within the bucket. Values are "one" and "X".
+Bucket 2: Contains k2 (printed as 1). Value "two".
+Bucket 3: Contains k3 (printed as 3). Value "three".
+Result: 3:one 1:X 1:two 3:three.
+2. TreeMap (treeMap)
+
+Comparator: Defined as (a, b) -> a.length() - b.length(). Keys are considered equal if they have the same length.
+Operations:
+merge("dd", 4, Integer::sum): "dd" (len 2) is new. Puts "dd" -> 4.
+merge("fff", 6, Integer::sum): "fff" (len 3) is new. Puts "fff" -> 6.
+put("c", 3): "c" (len 1) is new. Puts "c" -> 3.
+put("aa", 1): "aa" (len 2) matches "dd". Replaces value. "dd" -> 1. (TreeMap retains the original key "dd").
+put("bb", 2): "bb" (len 2) matches "dd". Replaces value. "dd" -> 2.
+merge("e", 5, Integer::sum): "e" (len 1) matches "c". Applies sum: 3 + 5 = 8. "c" -> 8.
+Iteration: Sorted by key length (ascending).
+Len 1: "c" -> 8.
+Len 2: "dd" -> 2.
+Len 3: "fff" -> 6.
+Result: c:8 dd:2 fff:6.
+3. LinkedHashMap (linkedMap)
+
+Configuration: accessOrder = true and removeEldestEntry removes when size() > 3.
+Operations:
+put(4, "D"): Map: [4].
+put(3, "C"): Map: [4, 3].
+get(2), get(1): No effect (keys missing).
+put(1, "A"): Map: [4, 3, 1]. (Size 3, eviction condition > 3 is false).
+put(2, "B"): Map: [4, 3, 1, 2]. Size becomes 4. Eviction removes eldest (4). Map: [3, 1, 2].
+put(5, "E"): Map: [3, 1, 2, 5]. Size becomes 4. Eviction removes eldest (3). Map: [1, 2, 5].
+Iteration: Order is insertion/modification order.
+Result: 1:A 2:B 5:E.
+4. IdentityHashMap (identityMap)
+
+Mechanism: Uses == for identity comparison.
+Integers:
+a and b (127) are the same object due to Integer Cache. a == b is true.
+c and d (128) are distinct objects (Standard Java behavior for integers outside -128 to 127 cache range, or simply different instances). c == d is false.
+Operations:
+put(b, "Y"): Puts Integer(127) -> "Y".
+put(a, "X"): Overwrites because a is same identity as b. Map: 127 -> "X".
+put(c, "Z"): Puts c instance of 128 -> "Z".
+put(d, "W"): Puts d instance of 128 -> "W".
+Iteration: IdentityHashMap uses a linear-probe hash table. The order generally follows the memory allocation/insertion sequence in a sparse table. Given c was allocated before d, it typically appears first.
+Result: 127:X 128:Z 128:W.

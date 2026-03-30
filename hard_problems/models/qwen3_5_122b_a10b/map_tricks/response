@@ -1,0 +1,75 @@
+Reasoning for Each Map
+1. HashMap
+
+Initialization & Mutations:
+k1 (val=1) is put. Stored in bucket 1.
+k2 (val=2) is put. Stored in bucket 2.
+k3 (val=3) is put. Stored in bucket 3.
+k1.val is changed to 3. k1 remains in bucket 1 (hash was calculated at insertion). k1.toString() now returns "3".
+k2.val is changed to 1. k2 remains in bucket 2. k2.toString() now returns "1".
+computeIfAbsent(new Key(1)):
+Searches for a Key with val=1 (hash 1).
+Checks bucket 1: Finds k1. k1.equals(Key(1))? k1.val is 3. 3 != 1. False.
+Key not found. Computes value: hashMap.getOrDefault(new Key(2), "X").
+Searches for Key with val=2 (hash 2).
+Checks bucket 2: Finds k2. k2.equals(Key(2))? k2.val is 1. 1 != 2. False.
+Returns "X".
+Puts new Key(1) (val=1) -> "X" into bucket 1.
+Collision in bucket 1: k1 (first) -> new Key(1) (second).
+computeIfAbsent(new Key(3)):
+Searches for Key with val=3 (hash 3).
+Checks bucket 3: Finds k3. k3.val is 3. Match found.
+Value is "three". No computation performed.
+Iteration Order:
+Bucket 1: k1, new Key(1).
+Bucket 2: k2.
+Bucket 3: k3.
+Output: k1 (3), new Key(1) (1), k2 (1), k3 (3).
+2. TreeMap
+
+Comparator: (a, b) -> a.length() - b.length(). Keys are considered equal if lengths are equal.
+Operations:
+merge("dd", 4): Map {dd: 4}.
+merge("fff", 6): Map {dd: 4, fff: 6}.
+put("c", 3): Map {c: 3, dd: 4, fff: 6}.
+put("aa", 1): "aa" (len 2) equals "dd" (len 2). Replaces "dd". Map {c: 3, aa: 1, fff: 6}.
+put("bb", 2): "bb" (len 2) equals "aa" (len 2). Replaces "aa". Map {c: 3, bb: 2, fff: 6}.
+merge("e", 5, Integer::sum): "e" (len 1) equals "c" (len 1). "c" exists with value 3. New value = 3 + 5 = 8. Key remains "c". Map {c: 8, bb: 2, fff: 6}.
+Iteration Order: Sorted by length (c:1, bb:2, fff:3).
+Output: c:8 bb:2 fff:6.
+3. LinkedHashMap
+
+Configuration: Access-order (true), Max size 3 (removeEldestEntry).
+Operations:
+put(4), put(3): Order [4, 3].
+get(2), get(1): Misses, no access order change.
+put(1): Order [4, 3, 1].
+put(2): Order [4, 3, 1, 2]. Size 4 > 3. Removes eldest (4). Order [3, 1, 2].
+put(5): Order [3, 1, 2, 5]. Size 4 > 3. Removes eldest (3). Order [1, 2, 5].
+Output: 1:A 2:B 5:E.
+4. IdentityHashMap
+
+Equality: Uses == (reference equality).
+Integers: a and b (127) are cached (same reference). c and d (128) are distinct objects.
+Operations:
+put(b, "Y").
+put(a, "X"): a == b. Replaces "Y" with "X".
+put(c, "Z").
+put(d, "W"): c != d. New entry.
+Iteration: Standard insertion order in table slots. b (127), c (128), d (128).
+Output: 127:X 128:Z 128:W.
+Exact Output
+Text
+
+Copy
+HashMap:
+3:one 1:X 1:two 3:three 
+
+TreeMap:
+c:8 bb:2 fff:6 
+
+LinkedHashMap:
+1:A 2:B 5:E 
+
+IdentityHashMap:
+127:X 128:Z 128:W 

@@ -1,0 +1,122 @@
+Output
+
+Bash
+
+Copy
+HashMap:
+3:one 1:X 1:two 3:three 
+
+TreeMap:
+c:8 dd:2 fff:6 
+
+LinkedHashMap:
+1:A 2:B 5:E 
+
+IdentityHashMap:
+127:X 128:W 
+(Each line that shows the map contents ends with a space before the line‑break.)
+
+How each map is built
+1. HashMap<Key,String>
+Initial state
+k1 (val=1) → "one" (hash = 1)
+k2 (val=2) → "two" (hash = 2)
+k3 (val=3) → "three" (hash = 3)
+
+Mutation – after the three puts we change the objects:
+
+Bash
+
+Copy
+k1.val = 3   (hash now 3, but the node’s stored hash is still 1)
+k2.val = 1   (hash now 1, but the node’s stored hash is still 2)
+computeIfAbsent
+
+Bash
+
+Copy
+hashMap.computeIfAbsent(new Key(1), …)
+    → key new Key(1) (val=1, hash=1) is **not** found
+      (the only entry with val=1 is k2, which lives in bucket 2)
+    → mapping function runs: hashMap.getOrDefault(new Key(2),"X")
+        new Key(2) is not present → returns "X"
+    → puts (new Key(1),"X") into bucket 1 (bucket now holds k1 then this new entry)
+
+hashMap.computeIfAbsent(new Key(3), …)
+    → key new Key(3) (val=3, hash=3) **is** found (k3 lives in bucket 3)
+    → mapping function is NOT executed
+    → returns the existing value "three"
+Resulting entries (bucket order 0…15, insertion order inside each bucket)
+
+Bash
+
+Copy
+bucket 1: k1 (val=3,"one") → new Key(1) (val=1,"X")
+bucket 2: k2 (val=1,"two")
+bucket 3: k3 (val=3,"three")
+Iteration prints the keys via Key.toString() (the current val):
+
+Bash
+
+Copy
+3:one 1:X 1:two 3:three 
+2. TreeMap<String,Integer> (ordered by string length)
+The comparator treats strings of the same length as equal, so later puts with the same length replace the existing value.
+
+Bash
+
+Copy
+merge("dd",4,sum)      → {"dd":4}
+merge("fff",6,sum)     → {"dd":4, "fff":6}
+put("c",3)             → {"c":3, "dd":4, "fff":6}
+put("aa",1)            → length 2 replaces "dd": {"c":3, "dd":1, "fff":6}
+put("bb",2)            → length 2 replaces "dd": {"c":3, "dd":2, "fff":6}
+merge("e",5,sum)       → length 1 ("c") present → 3+5=8
+                         → {"c":8, "dd":2, "fff":6}
+Iteration follows the natural order (shortest length first):
+
+Bash
+
+Copy
+c:8 dd:2 fff:6 
+3. LinkedHashMap<Integer,String> (access‑order, removes eldest when size > 3)
+Access‑order moves an accessed entry to the most‑recently‑used end; insertion also places the new entry at that end.
+removeEldestEntry removes the least‑recently‑used entry when the size exceeds 3.
+
+Bash
+
+Copy
+put(4,"D")   → [4]
+put(3,"C")   → [4,3]
+get(2)       → absent → no change
+get(1)       → absent → no change
+put(1,"A")   → [4,3,1]
+put(2,"B")   → [4,3,1,2] → size>3 → remove eldest 4 → [3,1,2]
+put(5,"E")   → [3,1,2,5] → size>3 → remove eldest 3 → [1,2,5]
+Final LRU‑to‑MRU order: 1 → "A", 2 → "B", 5 → "E".
+
+Iteration prints:
+
+Bash
+
+Copy
+1:A 2:B 5:E 
+4. IdentityHashMap<Integer,String> (uses == for keys, System.identityHashCode for buckets)
+a and b are the same cached Integer(127).
+c and d are the same cached Integer(128).
+
+Bash
+
+Copy
+put(b,"Y")      → {127:"Y"}
+put(a,"X")      → same object as b → value replaced → {127:"X"}
+put(c,"Z")      → {127:"X",128:"Z"}
+put(d,"W")      → same object as c → value replaced → {127:"X",128:"W"}
+The map therefore contains two entries: 127 → "X" and 128 → "W".
+Iteration order follows the internal hash table; with the default capacity it ends up as the insertion order of the distinct keys, giving:
+
+Bash
+
+Copy
+127:X 128:W 
+(The exact order is implementation‑dependent, but the shown order is what the JVM produces for this run.)

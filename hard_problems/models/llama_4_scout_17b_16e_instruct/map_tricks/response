@@ -1,0 +1,22 @@
+Output
+Bash
+
+Copy
+HashMap:
+3:three 1:one 
+TreeMap:
+aa:1 bb:2 c:3 dd:4 e:5 
+LinkedHashMap:
+5:E 1:A 2:B 3:C 4:D 
+IdentityHashMap:
+127:X 128:W 128:Y 
+HashMap Output
+The HashMap output is 3:three 1:one. Here's why:
+
+Initially, the HashMap contains entries 1:one, 2:two, and 3:three.
+Then, the values of k1 and k2 are changed to 3 and 1, respectively. This means that k1 and k2 now have the same hash codes as k3 and the original k1.
+The computeIfAbsent method is then called with a new Key(1) and a new Key(3).
+For new Key(1), it checks if a Key(1) is absent. Since k2 now has a value of 1, it is considered equal to new Key(1). Therefore, it returns the value associated with k2, which is two, but then it checks if new Key(2) is present. Since k1 now has a value of 3, it is not equal to new Key(2), but k2 is not present in the map either. So it returns "X". However, since k2 is present in the map with a value of "two", it doesn't add a new entry.
+For new Key(3), it checks if a Key(3) is absent. Since k1 now has a value of 3, it is considered equal to new Key(3). Therefore, it returns the value associated with k1, which is now "three", and then it checks if new Key(1) is present. Since k2 has a value of 1, it is considered equal to new Key(1), and it returns "one". However, since k3 is present in the map with a value of "three", it doesn't add a new entry.
+TreeMap Output
+The TreeMap output is `aa:1 bb:2 c:3 dd:4 e:5

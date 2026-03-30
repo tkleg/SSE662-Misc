@@ -1,0 +1,36 @@
+To determine the exact output, we need to analyze each map and its operations step-by-step. Let's break down the code and understand what happens with each map:
+
+HashMap
+Initialization and Insertions:
+
+hashMap.put(k1, "one"); -> k1 is Key(1), so hashMap contains {1: "one"}.
+hashMap.put(k2, "two"); -> k2 is Key(2), so hashMap contains {1: "one", 2: "two"}.
+hashMap.put(k3, "three"); -> k3 is Key(3), so hashMap contains {1: "one", 2: "two", 3: "three"}.
+Modifying Keys:
+
+k1.val = 3; -> k1 is now Key(3), but the HashMap still references the original Key(1) object.
+k2.val = 1; -> k2 is now Key(1), but the HashMap still references the original Key(2) object.
+ComputeIfAbsent:
+
+hashMap.computeIfAbsent(new Key(1), key -> hashMap.getOrDefault(new Key(2), "X")); -> new Key(1) is a new object, not the same as k1. Since new Key(1) is not in the map, it adds {1: "X"}.
+hashMap.computeIfAbsent(new Key(3), key -> hashMap.getOrDefault(new Key(1), "Y")); -> new Key(3) is a new object, not the same as k3. Since new Key(3) is not in the map, it adds {3: "Y"}.
+Final HashMap:
+
+{1: "one", 2: "two", 3: "three", 1: "X", 3: "Y"} -> The duplicate keys 1 and 3 will overwrite the previous values, resulting in {1: "X", 2: "two", 3: "Y"}.
+TreeMap
+Initialization and Insertions:
+treeMap.merge("dd", 4, Integer::sum); -> "dd" is added with value 4.
+treeMap.put("c", 3); -> "c" is added with value 3.
+treeMap.put("aa", 1); -> "aa" is added with value 1.
+treeMap.put("bb", 2); -> "bb" is added with value 2.
+treeMap.merge("e", 5, Integer::sum); -> "e" is added with value 5.
+Final TreeMap:
+
+{"aa": 1, "bb": 2, "c": 3, "dd": 4, "e": 5} -> TreeMap sorts keys alphabetically.
+LinkedHashMap
+Initialization and Insertions:
+linkedMap.put(4, "D"); -> {4: "D"}.
+linkedMap.put(3, "C"); -> {4: "D", 3: "C"}.
+linkedMap.put(1, "A"); -> {4: "D", 3: "C", 1: "A"}.
+linkedMap.put(2, "B"); -> {4: "D", 3: "C", 1: "A", 2: "B"}.
+linkedMap.put(5, "E"); -> `{4: "D", 3: "C", 1:

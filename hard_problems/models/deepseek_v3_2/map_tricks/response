@@ -1,0 +1,159 @@
+Let’s go step by step and track the state of each map after every operation.
+
+1. HashMap <Key, String>
+We start with:
+
+java
+Key k1 = new Key(1);
+Key k2 = new Key(2);
+Key k3 = new Key(3);
+hashMap.put(k1, "one");
+hashMap.put(k2, "two");
+hashMap.put(k3, "three");
+At this point:
+hashMap contains:
+
+k1(1) → "one"
+
+k2(2) → "two"
+
+k3(3) → "three"
+
+Now:
+
+java
+k1.val = 3;
+k2.val = 1;
+Key objects used for storage now have different internal values than when they were inserted, but hashMap uses the original Key object reference for lookup. Changing the value inside k1 or k2 does not affect the map's entries, because they are stored as objects not recalculated.
+
+The keys inside map are still Key objects that were new Key(1), new Key(2), new Key(3) at insertion time. After changing k1.val=3, k1 is now equal to the new Key(3) that was inserted?
+No — new Key(3) in the map is a different object from k1. But equals method compares val field, so k1.equals(new Key(3)) → true.
+However, when we computeIfAbsent, HashMap calls get on the key object passed (not the original key in the map).
+
+java
+hashMap.computeIfAbsent(new Key(1), key -> hashMap.getOrDefault(new Key(2), "X"));
+new Key(1) in map? Yes — k2 was Key(2) originally, but k2.val=1 now, but that object k2 is in map at key Key(2) originally. new Key(1) at lookup — map finds the key by .equals. k1 originally had val 1 at insertion, but after mutation, its val is 3. The original k1 is in map with val 1? No — hashMap.put(k1,"one") stored k1 object reference when k1.val=1. Changing k1.val to 3 didn’t remove it, but hashMap still uses the key object k1 for lookup. So new Key(1) will find no key in map because:
+
+keys in map: k1(now val=3), k2(now val=1), k3(val=3).
+
+new Key(1) → checks equals with each:
+k1: new Key(1).equals(k1) → 1 == 3? false.
+k2: 1 == 1? true. k2 is found.
+
+So get(new Key(1)) returns "two" because k2 currently has val=1, but originally hashMap.get(k2) = "two"? Wait — k2 is the key object inserted as new Key(2) but changed val to 1. That key object is in map at original Key(2). But for get and containsKey, it uses equals, so new Key(1) equals k2 (val=1). So hashMap.get(new Key(1)) finds entry k2 → "two".
+
+So hashMap.getOrDefault(new Key(2), "X") → get(new Key(2)):
+k1.val=3 → equals false, k2.val=1 → equals false (2 !=1), k3.val=3 → equals false. No key with val=2 → returns "X".
+
+Thus key -> hashMap.getOrDefault(new Key(2), "X") evaluates to "X".
+
+computeIfAbsent(new Key(1), ...): Is there already a key equal to new Key(1)? Yes — k2 currently val=1. So it doesn’t compute — just returns value "two". No change.
+
+java
+hashMap.computeIfAbsent(new Key(3), key -> hashMap.getOrDefault(new Key(1), "Y"));
+new Key(3) → equals true for k1 and k3 (both val=3). Found → returns value "one"? Wait — k1's value in map is "one". k3's value in map is "three". Which one will be found? Depends on iteration order? No — hashMap internally uses hash and may match either. But collision? val=3: hashCode=3 for both k1 and k3. They are different objects, same hash. In HashMap, they go to same bucket and are compared via equals for insertion and retrieval. So new Key(3) equals k1 and k3. Which one is returned? The first one found in the bucket. Could be k1 (inserted first) or k3. In insertion order, k1 then k3. But retrieval order depends on iteration order of entries with same hash? Probably both equals, but they are separate objects, so which one is returned? HashMap’s getNode finds first match in bucket. Let’s trace bucket:
+k1 put first, then k3 put later:
+
+hashMap's bucket for hash=3 has k1 first then k3.
+
+new Key(3) finds equals k1 first → returns "one".
+
+Then computeIfAbsent sees exists → returns "one". So no change.
+
+Thus after both computes, map unchanged: {k1=one, k2=two, k3=three} with k1.val=3, k2.val=1, k3.val=3.
+
+HashMap final print: k1 is Key@3, k2 is Key@1, k3 is Key@3, toString = val. So:
+
+k1:one (k1.val=3), k2:two (k2.val=1), k3:three (k3.val=3).
+Print order: 3:one 1:two 3:three
+
+So first line: HashMap: then 3:one 1:two 3:three.
+
+2. TreeMap <String, Integer>
+Comparator: (a,b) -> a.length() - b.length(). This means sorting by length.
+
+java
+treeMap.merge("dd", 4, Integer::sum);
+No key "dd" → put("dd", 4).
+
+treeMap.merge("fff", 6, Integer::sum); → put("fff", 6).
+
+treeMap.put("c", 3); → length 1.
+
+treeMap.put("aa", 1); → length 2.
+
+treeMap.put("bb", 2); → length 2.
+
+treeMap.merge("e", 5, Integer::sum); → put("e", 5) (length 1).
+
+TreeMap sorted by length. For ties, insertion order? No — TreeMap with comparator doesn’t keep order within same length for duplicates — but since we compare by length only, keys of same length are equal by comparator, so only one can exist? Wait! Wrong! Keys with same length compare equal, so later ones overwrite earlier.
+
+But compare only returns 0 when lengths equal, so "aa" and "bb" are equal by comparator, so "aa" first then "bb" replaces "aa". Similarly "c" and "e" length 1 → "c" then "e" replaces "c".
+
+Thus final:
+
+Length 1 keys: "e"
+Length 2 keys: "bb"
+Length 3 keys: "fff" and "dd" are equal length 3 → "fff" inserted first, then "dd" replaces "fff".
+
+So final: {e=5, bb=2, dd=4}.
+
+3. LinkedHashMap <Integer, String> with access-order and LRU
+java
+LinkedHashMap<Integer, String> linkedMap = new LinkedHashMap<>(16, 0.75f, true) {
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<Integer,String> eldest) {
+        return size() > 3;
+    }
+};
+Initial:
+linkedMap.put(4, "D") → {4=D}
+linkedMap.put(3, "C") → {4=D, 3=C}
+linkedMap.get(2) → null, no change.
+linkedMap.get(1) → null, no change.
+
+linkedMap.put(1, "A") → {4=D, 3=C, 1=A} (size 3)
+linkedMap.put(2, "B") → size 4 → eldest 4 removed → {3=C, 1=A, 2=B}
+
+linkedMap.put(5, "E") → size 4 → eldest 3 removed → {1=A, 2=B, 5=E}
+
+Final: {1=A, 2=B, 5=E}.
+
+4. IdentityHashMap <Integer, String>
+Key Integer but uses reference equality.
+
+java
+Integer a = 127, b = 127, c = 128, d = 128;
+b and a are same object? No — Integers from -128 to 127 are cached, so a==b true for 127. For 128, new objects each time.
+
+identityMap.put(b, "Y") → b=127
+identityMap.put(a, "X") → a=127 same as b, so this replaces "Y" with "X".
+
+identityMap.put(c, "Z") → c=128 new object
+identityMap.put(d, "W") → d=128 new object, so not equal to c, separate entry.
+
+Final map: {127="X", 128="Z", 128="W"} but print order? IdentityHashMap iterates over internal array order. Likely 127, 128, 128 in order of insertion.
+
+Final Output
+From given program with exact order:
+
+HashMap:
+3:one 1:two 3:three
+TreeMap:
+e:5 bb:2 dd:4
+LinkedHashMap:
+1:A 2:B 5:E
+IdentityHashMap:
+127:X 128:Z 128:W
+
+Final answer:
+
+text
+HashMap:
+3:one 1:two 3:three 
+TreeMap:
+e:5 bb:2 dd:4 
+LinkedHashMap:
+1:A 2:B 5:E 
+IdentityHashMap:
+127:X 128:Z 128:W
