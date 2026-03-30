@@ -4,15 +4,28 @@ import java.util.*;
 
 class Key {
     int val;
-    Key(int val) { this.val = val; }
+    Key(int val){
+        this.val = val;
+    }
+
     @Override
-    public int hashCode() { return val; }
+    public int hashCode(){
+        return val;
+    }
+
     @Override
     public boolean equals(Object o) {
-        return o instanceof Key && ((Key)o).val == this.val;
+        if( !( o instanceof Key ) ) 
+            return false;
+        Key other = (Key) o;
+        return this.val == other.val;
     }
+
     @Override
-    public String toString() { return String.valueOf(val); }
+    public String toString(){
+        return ""+val;
+    }
+
 }
 
 public class MapTricks {
