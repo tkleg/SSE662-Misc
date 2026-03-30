@@ -28,7 +28,7 @@ class Key {
 
 }
 
-public class MapTricks {
+public class MapTricksScrambled {
     public static void main(String[] args) {
         Map<Key, String> hashMap = new HashMap<>();
         LinkedHashMap<Integer, String> linkedMap = new LinkedHashMap<>(16, 0.75f, true) {
@@ -54,22 +54,22 @@ public class MapTricks {
         hashMap.computeIfAbsent(new Key(1), key -> hashMap.getOrDefault(new Key(2), "X"));
         hashMap.computeIfAbsent(new Key(3), key -> hashMap.getOrDefault(new Key(1), "Y"));
 
-        treeMap.put("aa", 1);
-        treeMap.put("bb", 2);
-        treeMap.put("c", 3);
+        linkedMap.put(4, "D");
+        linkedMap.put(3, "C");
+        identityMap.put(b, "Y");
+        linkedMap.get(2);
+        linkedMap.get(1);
         treeMap.merge("dd", 4, Integer::sum);
-        treeMap.merge("e", 5, Integer::sum);
-        treeMap.merge("fff", 6, Integer::sum);
         linkedMap.put(1, "A");
         linkedMap.put(2, "B");
-        linkedMap.put(3, "C");
-        linkedMap.get(1);
-        linkedMap.put(4, "D");
-        linkedMap.get(2);
-        linkedMap.put(5, "E");
+        treeMap.merge("fff", 6, Integer::sum);
+        treeMap.put("c", 3);
         identityMap.put(a, "X");
-        identityMap.put(b, "Y");
+        treeMap.put("aa", 1);
         identityMap.put(c, "Z");
+        treeMap.put("bb", 2);
+        linkedMap.put(5, "E");
+        treeMap.merge("e", 5, Integer::sum);
         identityMap.put(d, "W");
 
         System.out.println("HashMap:");
