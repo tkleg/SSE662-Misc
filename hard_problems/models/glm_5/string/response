@@ -1,0 +1,107 @@
+Here is the exact output of the code, followed by the reasoning for each statement.
+
+Exact Output
+Text
+
+Copy
+k == h: true
+j == h: false
+j == j.intern(): false
+t.intern() == r: true
+t == r: false
+s == r: true
+g == h: false
+j.intern() == h: true
+m == o: false
+a == c: false
+a == d: false
+l == h: false
+a == e: true
+m == n: true
+i == h: true
+a == b: true
+f == g: false
+jjj == h: false
+l.intern() == h: true
+g.intern() == h: true
+q == r: true
+o.intern() == m: true
+jj == h: false
+Reasoning
+Here is the detailed breakdown for each System.out.println statement, explaining whether the result is true or false based on Java's String Pool and heap behavior.
+
+k == h: true
+
+h is a String literal "foobar", so it is stored in the String Pool.
+k is created using new String("foobar").intern(). The intern() method checks the pool. Since "foobar" already exists (referenced by h), intern() returns the reference to the pooled object. Thus, k and h point to the same object.
+j == h: false
+
+j is created using the new String("foobar") constructor. In Java, the new keyword forces the creation of a new object on the heap, distinct from the String Pool. h is in the pool. Therefore, they are different objects.
+j == j.intern(): false
+
+j is a heap object. j.intern() returns the reference from the String Pool (which is the same object h refers to). Since j is explicitly on the heap and not in the pool (until interned), j (heap reference) is not the same as j.intern() (pool reference).
+t.intern() == r: true
+
+r is the literal "bazqux", placed in the String Pool.
+t is constructed at runtime using p + new String("qux"). This results in a new heap object with the value "bazqux". Calling t.intern() looks up "bazqux" in the pool, finds the object referenced by r, and returns it. Thus, they are equal references.
+t == r: false
+
+As explained above, t is a runtime concatenation resulting in a new heap object. r is a literal in the pool. They are different objects in memory.
+s == r: true
+
+s is assigned ("ba" + "z") + ("qu" + "x"). Because all components are String literals, the Java compiler performs "constant folding" at compile-time. It concatenates these into a single String literal "bazqux". Since r is also the literal "bazqux", both variables refer to the exact same interned object.
+g == h: false
+
+g is assigned f + "bar" ("foo" + "bar"). Because f is a variable (not a final constant), this concatenation occurs at runtime. Java creates a new object on the heap (typically using a StringBuilder). h is a literal in the pool. Therefore, memory locations differ.
+j.intern() == h: true
+
+j.intern() returns the canonical representation of "foobar" from the String Pool. h is the literal "foobar", which is already in the pool. Both variables point to the same interned String.
+m == o: false
+
+m is a String literal (Unicode characters), stored in the pool.
+o is created using new String(...), forcing a new object on the heap. Even though the contents are identical, the references are different.
+a == c: false
+
+c is assigned a + "". Since a is a variable, this operation is performed at runtime, producing a new heap object. (Note: Modern compilers with invokedynamic handle concatenation efficiently, but it still results in a new heap object distinct from the pool literal a).
+a == d: false
+
+a is in the pool. d is created with new String("Hello"), which creates a new object on the heap. They are different references.
+l == h: false
+
+l is the result of "fo" + new String("obar"). This is a runtime operation involving a new object. It produces a new heap object. h is a pool literal.
+a == e: true
+
+c was a heap object "Hello". e is assigned c.intern(). The pool already contains "Hello" (from a). Thus, c.intern() returns the reference held by a. a and e point to the same object.
+m == n: true
+
+n is assigned ("𝔘" + "𝔫" + ...). All parts are literals. The compiler folds these into a single String literal at compile time. Since m is the same literal sequence, both m and n refer to the same interned object.
+i == h: true
+
+i is assigned "fo" + "obar". Both are literals, so the compiler folds them into "foobar". h is the literal "foobar". Both refer to the same interned object.
+a == b: true
+
+Both a and b are assigned the String literal "Hello". Java interns literals, so both variables point to the same object in the String Pool.
+f == g: false
+
+f is "foo" (pool). g is "foobar" (heap runtime concat). Not only are the contents different, but they are also obviously different references. (Note: While the code prints the comparison f == g, usually g would be compared to h, but the code specifically asks for f == g).
+jjj == h: false
+
+jjj is derived from j. j.subSequence(0, 6).toString() effectively returns a String equivalent to j (since j is "foobar"). While substring methods in older Java versions had memory optimization quirks, modern Java (7u6+) creates new heap objects for substring results if the bounds are not identical to the original or if the method logic dictates a new String copy (though substring on the full length typically returns this, the chain of calls subSequence -> toString ensures the result is effectively j). j is a heap object distinct from h.
+l.intern() == h: true
+
+l has the value "foobar". l.intern() checks the pool. h placed "foobar" in the pool. intern() returns the reference to h.
+g.intern() == h: true
+
+Similar to above, g has the value "foobar". Interning it retrieves the existing pooled instance h.
+q == r: true
+
+p is a final String variable initialized with a literal. It is treated as a constant.
+q is assigned p + "qux". Because p is a constant, the compiler evaluates "baz" + "qux" at compile time to "bazqux".
+r is the literal "bazqux".
+Both are compile-time constants referring to the same interned object.
+o.intern() == m: true
+
+o (new object) and m (literal) have the same content ("𝔘𝔫𝔦𝔠𝔬𝔡𝔢"). o.intern() returns the reference from the pool, which is m.
+jj == h: false
+
+jj is assigned j.substring(0). In modern Java, substring(0) returns the same object reference (this). Since j is a heap object created with new, jj refers to that same heap object. h is in the pool.

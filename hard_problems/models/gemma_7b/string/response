@@ -1,0 +1,82 @@
+Output:
+
+Bash
+
+Copy
+k == h: true
+j == h: true
+j == j.intern(): true
+t.intern() == r: true
+t == r: true
+s == r: true
+g == h: true
+j.intern() == h: true
+m == o: true
+a == c: true
+a == d: true
+l == h: true
+a == e: true
+m == n: true
+i == h: true
+a == b: true
+f == g: true
+jjj == h: false
+l.intern() == h: true
+g.intern() == h: true
+q == r: true
+o.intern() == m: true
+jj == h: false
+Reasoning:
+
+1. k == h:
+
+k is a string literal that is interned in the string pool.
+h is also a string literal that is interned in the string pool.
+Since the same string literal is interned only once, k and h point to the same object in the string pool, hence k == h is true.
+2. j == h:
+
+j is a string object created using the new keyword.
+h is a string literal that is interned in the string pool.
+Although j and h have different objects, they contain the same string content, hence j == h is true.
+3. j == j.intern():
+
+j is a string object created using the new keyword.
+j.intern() method returns the interned string object in the string pool that represents the same string content as j.
+Since j and the returned interned object are the same object, j == j.intern() is true.
+4. t.intern() == r:
+
+t is a string object created using the new keyword.
+r is a string literal that is interned in the string pool.
+t.intern() method returns the interned string object in the string pool that represents the same string content as t.
+Since t and the returned interned object are the same object, t.intern() == r is true.
+5. t == r:
+
+t and r are string literals that are interned in the string pool.
+Since the same string literal is interned only once, t and r point to the same object in the string pool, hence t == r is true.
+6. s == r:
+
+s is a string literal that is created using the ba and qu concatenations.
+r is a string literal that is also created using the ba and qu concatenations.
+Since the same string literal is interned only once, s and r point to the same object in the string pool, hence s == r is true.
+7. g == h:
+
+g is a string literal that is created using the foo concatenation.
+h is a string literal that is also created using the foo concatenation.
+Since the same string literal is interned only once, g and h point to the same object in the string pool, hence g == h is true.
+8. m == o:
+
+m and o are string literals that are created using the same character sequence.
+Since the same string literal is interned only once, m and o point to the same object in the string pool, hence m == o is true.
+9. a == c:
+
+a and c are string literals that are created using the same character sequence.
+Since the same string literal is interned only once, a and c point to the same object in the string pool, hence a == c is true.
+10. a == d:
+
+a and d are string objects created using different constructors, but they contain the same string content.
+Although a and d are different objects, they contain the same string content, hence a == d is false.
+11. l == h:
+
+l is a string object created using the fo concatenation and obar substring.
+h is a string literal that is also created using the foo concatenation.
+Although

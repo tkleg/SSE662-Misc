@@ -1,0 +1,101 @@
+Exact Output
+Text
+
+Copy
+k == h: true
+j == h: false
+j == j.intern(): false
+t.intern() == r: true
+t == r: false
+s == r: true
+g == h: false
+j.intern() == h: true
+m == o: false
+a == c: false
+a == d: false
+l == h: false
+a == e: true
+m == n: true
+i == h: true
+a == b: true
+f == g: false
+jjj == h: false
+l.intern() == h: true
+g.intern() == h: true
+q == r: true
+o.intern() == m: true
+jj == h: false
+(Note: Lines 18 and 23 are printed to System.err, but in a standard console execution, they appear interleaved with System.out in the order of execution.)
+
+Detailed Reasoning
+1. k == h: true
+
+Reasoning: h is a string literal "foobar", so it resides in the String Pool. k is created via new String("foobar").intern(). The new String creates a heap object, but .intern() checks the pool, finds "foobar" (which is h), and returns the pool reference. Thus, k and h point to the same object.
+2. j == h: false
+
+Reasoning: j is created via new String("foobar"). This explicitly allocates a new object on the heap. h is in the String Pool. They are different objects in memory.
+3. j == j.intern(): false
+
+Reasoning: j is the heap object. j.intern() returns the reference from the String Pool (which is h). A heap object is not == to the pool object (unless it was already in the pool, which new String prevents).
+4. t.intern() == r: true
+
+Reasoning: t is created at runtime (p + new String("qux")). It is a new heap object with value "bazqux". When .intern() is called, the JVM checks the pool. Since r ("bazqux") already exists in the pool (as a literal), t.intern() returns the reference to r.
+5. t == r: false
+
+Reasoning: t is a heap object (runtime concatenation). r is a String Pool literal. They are different references.
+6. s == r: true
+
+Reasoning: s is ("ba" + "z") + ("qu" + "x"). All operands are string literals. The Java compiler performs constant folding at compile-time, resulting in the literal "bazqux". Therefore, s points to the same String Pool object as r.
+7. g == h: false
+
+Reasoning: g is f + "bar". Since f is a variable (even if final, it's not a compile-time constant expression in this context relative to the concatenation operator in older Java versions, but specifically f is not a constant expression itself in the context of the compiler's constant folding rules for concatenation unless final and initialized to literal, which it is. However, f is initialized to "foo", which is a constant. But g is defined as f + "bar". Wait, f is final String f = "foo". So f is a compile-time constant. f + "bar" should be folded.
+Correction on g: String f = "foo"; (Not final). String g = f + "bar";. Since f is not final, the compiler cannot guarantee its value at compile-time. Thus, g is a runtime concatenation. It creates a new heap object. h is pool. g == h is false.
+(Self-Correction during drafting): Looking closely at the code: String f = "foo"; (No final). String g = f + "bar";. Because f is not final, this is runtime concatenation. g is heap. h is pool. false.
+8. j.intern() == h: true
+
+Reasoning: Same as point 1. j.intern() returns the pool reference h.
+9. m == o: false
+
+Reasoning: m is a literal "𝔘𝔫𝔦𝔠𝔬𝔡𝔢" (pool). o is new String("𝔘𝔫𝔦𝔠𝔬𝔡𝔢") (heap). Different references.
+10. a == c: false
+
+Reasoning: a is the literal "Hello" (pool). c is a + "". The + operator with a variable (a) forces runtime concatenation (even if a is effectively final). This creates a new heap String. a is pool, c is heap.
+11. a == d: false
+
+Reasoning: d is new String("Hello") (heap). a is pool.
+12. l == h: false
+
+Reasoning: l is "fo" + new String("obar"). The presence of new String forces runtime concatenation. l is a new heap object. h is pool.
+13. a == e: true
+
+Reasoning: e is c.intern(). c is "Hello". The pool already contains "Hello" (referenced by a). intern() returns the existing pool reference a.
+14. m == n: true
+
+Reasoning: n is a concatenation of literals ("𝔘" + "𝔫" + ...). The compiler folds this into the literal "𝔘𝔫𝔦𝔠𝔬𝔡𝔢" at compile-time. Thus, n points to the same pool object as m.
+15. i == h: true
+
+Reasoning: i is "fo" + "obar". Both are literals. Compile-time constant folding results in the literal "foobar". i points to the pool object h.
+16. a == b: true
+
+Reasoning: Both a and b are assigned the literal "Hello". The JVM ensures only one instance of this literal exists in the pool. They share the reference.
+17. f == g: false
+
+Reasoning: f is "foo". g is "foobar". They have different content. == checks reference equality, which fails immediately for different content objects.
+18. jjj == h: false (System.err)
+
+Reasoning: j is a heap object. j.subSequence(0, 6) returns a String (implementation detail of String), which calls substring. In modern Java (7+), substring creates a new String object copying the array. toString() on that String returns this. So jjj is a new heap object. h is pool.
+19. l.intern() == h: true
+
+Reasoning: l is a heap object with value "foobar". Calling .intern() checks the pool, finds h, and returns h.
+20. g.intern() == h: true
+
+Reasoning: g is a heap object with value "foobar". Calling .intern() checks the pool, finds h, and returns h.
+21. q == r: true
+
+Reasoning: p is final String p = "baz". This makes p a compile-time constant. q = p + "qux" is optimized by the compiler to String q = "bazqux". r is also "bazqux" (pool). They share the reference.
+22. o.intern() == m: true
+
+Reasoning: o is a heap object with value "𝔘𝔫𝔦𝔠𝔬𝔡𝔢". .intern() returns the pool reference m.
+23. jj == h: false (System.err)
+
+Reasoning: jj is j.substring(0). Since Java 7u6, substring creates a new String object (copying the char array). jj is a new heap object. h is pool. They are not the same reference.

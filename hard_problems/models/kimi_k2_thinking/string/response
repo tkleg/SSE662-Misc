@@ -1,0 +1,57 @@
+Exact Output (as printed to stdout/stderr)
+
+Bash
+
+Copy
+k == h: true
+j == h: false
+j == j.intern(): false
+t.intern() == r: true
+t == r: false
+s == r: true
+g == h: false
+j.intern() == h: true
+m == o: false
+a == c: false
+a == d: false
+l == h: false
+a == e: true
+m == n: true
+i == h: true
+a == b: true
+f == g: false
+jjj == h: false
+l.intern() == h: true
+g.intern() == h: true
+q == r: true
+o.intern() == m: true
+jj == h: false
+Note: The two lines printed via System.err (jjj == h: false and jj == h: false) may appear slightly earlier or later in the console depending on how the output streams are buffered, but the logical order follows the source code as shown above. The code also contains a small typo ("m == o: " (m == o)); the answer assumes the + operator is present so the program compiles.
+
+Reasoning for each line
+#
+Printed expression	Result	Why
+1	k == h	true	k is assigned new String("foobar").intern(). The literal "foobar" is already in the constant pool (from String h = "foobar";), so intern() returns that pooled instance – the same reference as h.
+2	j == h	false	j is created with new String("foobar"), which always produces a fresh String object on the heap, distinct from the interned literal h.
+3	j == j.intern()	false	j.intern() returns the interned "foobar" (the same as h). Since j itself is not interned, the two references differ.
+4	t.intern() == r	true	t is built as p + new String("qux") (non‑constant), so it is a new object. The literal "bazqux" is already in the pool (from String r = "bazqux";), therefore t.intern() yields the same reference as r.
+5	t == r	false	t is a runtime‑created object; r is the interned literal. They are different objects.
+6	s == r	true	s is a constant expression: ("ba" + "z") + ("qu" + "x"). The compiler folds it to the literal "bazqux", which is exactly the same object as r.
+7	g == h	false	g is f + "bar" where f is a non‑final variable. This is not a compile‑time constant, so g is a new String. h is the interned literal "foobar".
+8	j.intern() == h	true	As in #3, j.intern() returns the pooled "foobar", i.e., the same object as h.
+9	m == o	false	m is a Unicode string literal (interned). o is constructed with new String(...), a distinct heap object.
+10	a == c	false	a is the literal "Hello". c is a + "", which is evaluated at runtime (not a constant expression) and therefore produces a new String object.
+11	a == d	false	d is new String("Hello"); it is a fresh object, not the interned literal a.
+12	l == h	false	l is "fo" + new String("obar"). Because new String("obar") is not a constant, the concatenation yields a new object, not the interned "foobar".
+13	a == e	true	e is c.intern(). Since c holds "Hello", interning returns the pooled "Hello", which is a.
+14	m == n	true	n is a constant expression formed from Unicode literals. The compiler folds it to the same string as m, which is interned.
+15	i == h	true	i is "fo" + "obar" – a constant expression folded to the literal "foobar", identical to h.
+16	a == b	true	Both are literals "Hello"; literals are interned, so they reference the same object.
+17	f == g	false	f is the literal "foo"; g is a runtime concatenation (f + "bar") and thus a different object.
+18	jjj == h	false	jjj is j.subSequence(0, 6).toString(). subSequence on a String delegates to substring, which returns this when the range covers the entire string. Hence jjj == j. Since j != h, jjj != h.
+19	l.intern() == h	true	l contains "foobar"; interning it returns the pooled "foobar", i.e., h.
+20	g.intern() == h	true	Same logic: g holds "foobar", so g.intern() yields the pooled h.
+21	q == r	true	q is p + "qux" where p is a final variable. The expression is a compile‑time constant, so q is the interned literal "bazqux" – the same as r.
+22	o.intern() == m	true	o contains the Unicode string "𝔘𝔫𝔦𝔠𝔬𝔡𝔢"; interning returns the pooled instance m.
+23	jj == h	false	jj is j.substring(0). As explained for #18, substring(0) returns this (the original j). Since j is not interned, jj and h differ.
+All behavior is consistent with the Java Language Specification (JLS 15.28 – Constant Expressions) and the String.intern() contract, and it remains unchanged in Java 25.01.1.

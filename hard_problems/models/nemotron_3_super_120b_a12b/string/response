@@ -1,0 +1,31 @@
+Output (the lines appear in the order they are written in the program)
+
+Bash
+
+Copy
+k == h: true
+j == h: false
+j == j.intern(): falset.intern() == r: true
+t == r: false
+s == r: true
+g == h: false
+j.intern() == h: true
+m == o: false
+a == c: false
+a == d: false
+l == h: falsea == e: true
+m == n: true
+i == h: true
+a == b: true
+f == g: falsejjj == h: false
+l.intern() == h: true
+g.intern() == h: true
+q == r: true
+o.intern() == m: truejj == h: false
+(The two System.err.println statements write to the standard‑error stream; in most consoles they appear interleaved with the standard‑output lines exactly as shown above.)
+
+Reasoning for each comparison | # | Expression | Value | Why |
+|---|------------|-------|-----| | 1 | k == h | true | k = new String("foobar").intern() → interns the literal "foobar"; h = "foobar" is also a literal, so both refer to the same pooled instance. | | 2 | j == h | false | j = new String("foobar") creates a new heap object; h is the interned literal. Different objects → false. | | 3 | j == j.intern() | false | j.intern() returns the pooled "foobar" (same as h). j itself is not interned, so the references differ. | | 4 | t.intern() == r | true | t = p + new String("qux") → "bazqux" as a new object. t.intern() interns that string, giving the pooled "foobar"‑equivalent "bazqux", which is exactly what r = "bazqux" holds. | | 5 | t == r | false | t is a newly created object (see above); r is the interned literal. Different references. | | 6 | s == r | true | s = ("ba" + "z") + ("qu" + "x") is a compile‑time constant expression → "bazqux" literal, thus interned and identical to r. | | 7 | g == h | false | g = f + "bar" where f is the variable "foo"; the concatenation is performed at runtime → a new "foobar" object. h is the interned literal. | | 8 | j.intern() == h | true | j.intern() yields the pooled "foobar"; h is that same pooled instance. | | 9 | m == o | false | m = "𝔘𝔫𝔦𝔠𝔬𝔡𝔢" is a literal (interned). o = new String("𝔘𝔫𝔦𝔠𝔬𝔡𝔢") creates a fresh object. | |10 | a == c | false | a = "Hello" (literal). c = a + "" → runtime concatenation of a variable with "" → a new "Hello" object. | |11 | a == d | false | d = new String("Hello") creates a new object; a is the interned literal. | |12 | l == h | false | l = "fo" + new String("obar") → runtime concat → new "foobar" object; h is the interned literal. | |13 | a == e | true | e = c.intern() → interns the content of c ("Hello"), which is exactly the pooled instance referenced by a and b. | |14 | m == n | true | n = ("𝔘" + "𝔫" + "𝔦" + "𝔠" + "𝔬" + "𝔡" + "𝔢") – all operands are literals, so the concatenation is a compile‑time constant yielding the same interned string as m. | |15 | i == h | true | i = "fo" + "obar" – both sides are literals → compile‑time constant "foobar" → same interned reference as h. | |16 | a == b | true | Both are the literal "Hello"; they refer to the same pooled instance. | |17 | f == g | false | f = "foo" (literal). g = f + "bar" → runtime concatenation → new "foobar" object. | |18 | jjj == h (stderr) | false | jjj = j.subSequence(0,6).toString(). subSequence(0,6) on a 6‑character string returns the original object (j); toString() on a String returns itself. Hence jjj is the same non‑interned object as j, not equal to the interned h. | |19 | l.intern() == h (stdout) | true | l holds a newly created "foobar"; l.intern() interns it, producing the pooled "foobar" that h references. | |20 | g.intern() == h (stdout) | true | Same reasoning as for l: g is a runtime‑created "foobar"; its intern is the pooled version equal to h. | |21 | q == r (stdout) | true | p is final String p = "baz"; p + "qux" is a compile‑time constant → "bazqux" literal, interned, identical to r. | |22 | o.intern() == m (stdout) | true | o = new String("𝔘𝔫𝔦𝔠𝔬𝔡𝔢"); o.intern() returns the pooled instance of that string, which is exactly the literal referenced by m. | |23 | jj == h (stderr) | false | jj = j.substring(0). substring(0) returns the original object when the begin index is 0; thus jj is the same non‑interned object as j, not equal to the interned h. |
+
+Notes on Java 25 (hypothetical)
+The behavior of string literals, compile‑time constant concatenation, String.intern(), substring(0), and subSequence(...).toString() has been stable since early Java versions and is unchanged in Java 25. Therefore the reasoning above applies unchanged to the requested version.

@@ -1,0 +1,100 @@
+Exact Output of the Program (Java 25)
+The program prints the following lines in order, with the two System.err.println lines appearing in stderr (marked with ⚠️ below). The rest are printed to stdout.
+
+Output Lines with Reasoning
+k == h: true
+
+Why? k is new String("foobar").intern(), which interns the string into the pool. h is the literal "foobar", so they refer to the same object in the string pool.
+j == h: false
+
+Why? j is new String("foobar"), a new object not in the pool. h is the literal "foobar", so they are different objects.
+j == j.intern(): false
+
+Why? j is a new object. j.intern() returns the pooled instance of "foobar", which is different from j.
+t.intern() == r: true
+
+Why? t is p + new String("qux") (runtime concatenation). t.intern() interns it to the pool, matching the literal r = "bazqux".
+t == r: false
+
+Why? t is a new object (runtime concatenation). r is the literal, so they are different.
+s == r: true
+
+Why? s is ("ba" + "z") + ("qu" + "x"), a compile-time concatenation of literals, resulting in "bazqux" (same as r).
+g == h: false
+
+Why? g is f + "bar" (runtime concatenation, since f is a variable). h is the literal "foobar", so they are different objects.
+j.intern() == h: true
+
+Why? j.intern() returns the pooled "foobar", which is the same as h.
+m == o: false
+
+Why? m is the literal "𝔘𝔫𝔦𝔠𝔬𝔡𝔢". o is new String("𝔘𝔫𝔦𝔠𝔬𝔡𝔢"), a new object not in the pool.
+a == c: false
+
+Why? a is the literal "Hello". c is a + "" (runtime concatenation), creating a new object.
+a == d: false
+
+Why? a is the literal "Hello". d is new String("Hello"), a new object.
+l == h: false
+
+Why? l is "fo" + new String("obar") (runtime concatenation). h is the literal "foobar", so they are different objects.
+a == e: true
+
+Why? e is c.intern(), where c is "Hello" (from a + ""). c.intern() returns the pooled "Hello", which is a.
+m == n: true
+
+Why? m is the literal "𝔘𝔫𝔦𝔠𝔬𝔡𝔢". n is ("𝔘" + "𝔫" + ... ), a compile-time concatenation of literals, resulting in the same string as m.
+i == h: true
+
+Why? i is "fo" + "obar" (compile-time concatenation), resulting in "foobar", same as h.
+a == b: true
+
+Why? Both a and b are the literal "Hello", so they refer to the same object.
+f == g: false
+
+Why? f is "foo". g is f + "bar" (runtime concatenation), resulting in "foobar", a new object.
+⚠️ jjj == h: false (printed to stderr)
+
+Why? jjj is j.subSequence(0,6).toString(). j is new String("foobar"), so subSequence(0,6) creates a CharSequence view, and toString() creates a new string object with the same content as h. Thus, jjj is a new object, not the same as h.
+l.intern() == h: true
+
+Why? l is "fo" + new String("obar") (runtime concatenation). l.intern() interns it to the pool, matching h = "foobar".
+g.intern() == h: true
+
+Why? g is "foobar" (from f + "bar"). g.intern() interns it to the pool, matching h.
+q == r: false
+
+Why? q is p + "qux" (runtime concatenation, even though p is final). r is the literal "bazqux", so q is a new object.
+o.intern() == m: true
+
+Why? o is new String("𝔘𝔫𝔦𝔠𝔬𝔡𝔢"). o.intern() returns the pooled instance, which is m.
+⚠️ jj == h: false (printed to stderr)
+
+Why? jj is j.substring(0). substring(0) creates a new string object (even if it’s the whole string), so jj is a new object, not the same as h.
+Final Output (Combined stdout + stderr)
+Bash
+
+Copy
+k == h: true
+j == h: false
+j == j.intern(): false
+t.intern() == r: true
+t == r: false
+s == r: true
+g == h: false
+j.intern() == h: true
+m == o: false
+a == c: false
+a == d: false
+l == h: false
+a == e: true
+m == n: true
+i == h: true
+a == b: true
+f == g: false
+⚠️ jjj == h: false
+l.intern() == h: true
+g.intern() == h: true
+q == r: false
+o.intern() == m: true
+⚠️ jj == h: false

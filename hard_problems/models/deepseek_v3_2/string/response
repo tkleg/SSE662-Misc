@@ -1,0 +1,92 @@
+k == h: true
+j == h: false
+j == j.intern(): false
+t.intern() == r: true
+t == r: false
+s == r: true
+g == h: false
+j.intern() == h: true
+m == o: false
+a == c: false
+a == d: false
+l == h: false
+a == e: true
+m == n: true
+i == h: true
+a == b: true
+f == g: false
+jjj == h: false
+l.intern() == h: true
+g.intern() == h: true
+q == r: true
+o.intern() == m: true
+jj == h: false
+Reasoning for Each Output
+k == h: true
+k is new String("foobar").intern(), which returns the interned canonical instance of "foobar". h is the string literal "foobar", which is also interned. Both refer to the same object in the string pool.
+
+j == h: false
+j is new String("foobar"), creating a new String object on the heap. h is the interned literal. They are different objects.
+
+j == j.intern(): false
+j is a new, non-interned string. j.intern() returns the canonical interned instance of "foobar" (the same as h), which is a different object.
+
+t.intern() == r: true
+t is (p + new String("qux")), a runtime concatenation producing a new string object. t.intern() returns the interned "bazqux". r is the literal "bazqux", which is the same interned object.
+
+t == r: false
+t is a new string object, while r is the interned literal. They are different.
+
+s == r: true
+s is ("ba" + "z") + ("qu" + "x"), a compile-time constant expression. It is interned and identical to the literal r.
+
+g == h: false
+g is f + "bar", a runtime concatenation (since f is a variable), producing a new string. h is the interned literal "foobar".
+
+j.intern() == h: true
+j.intern() returns the canonical interned "foobar", which is the same object as h.
+
+m == o: false
+m is the interned literal "𝔘𝔫𝔦𝔠𝔬𝔡𝔢". o is new String("𝔘𝔫𝔦𝔠𝔬𝔡𝔢"), a new heap object.
+
+a == c: false
+a is the interned literal "Hello". c is a + "", a runtime concatenation producing a new string.
+
+a == d: false
+a is the interned literal. d is new String("Hello"), a new heap object.
+
+l == h: false
+l is "fo" + new String("obar"), a runtime concatenation producing a new string. h is the interned literal "foobar".
+
+a == e: true
+a is the interned "Hello". e is c.intern(), which returns the canonical instance of "Hello" (the same as a).
+
+m == n: true
+m is the interned literal "𝔘𝔫𝔦𝔠𝔬𝔡𝔢". n is ("𝔘" + "𝔫" + ... + "𝔢"), a compile-time constant expression that evaluates to the same string, so it is interned and identical to m.
+
+i == h: true
+i is "fo" + "obar", a compile-time constant expression interned as "foobar", same as h.
+
+a == b: true
+Both a and b are string literals "Hello" and refer to the same interned object.
+
+f == g: false
+f is the interned literal "foo". g is f + "bar", a runtime concatenation producing a new string.
+
+jjj == h: false
+jjj is j.subSequence(0, 6).toString(), which creates a new string object (since subSequence returns a new substring). h is the interned literal "foobar".
+
+l.intern() == h: true
+l.intern() returns the canonical interned "foobar", which is the same as h.
+
+g.intern() == h: true
+g.intern() returns the canonical interned "foobar", same as h.
+
+q == r: true
+q is p + "qux", where p is a final constant "baz". This is a compile-time constant expression, so q is interned and identical to the literal r.
+
+o.intern() == m: true
+o.intern() returns the canonical interned "𝔘𝔫𝔦𝔠𝔬𝔡𝔢", which is the same as m.
+
+jj == h: false
+jj is j.substring(0), which creates a new string object (even though it represents the entire string). h is the interned literal "foobar".
